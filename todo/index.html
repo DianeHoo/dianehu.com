@@ -1,0 +1,3588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Eisenhower Matrix — Personal Clarity Tool</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600&family=Plus+Jakarta+Sans:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* ── Reset & Base ── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+:root {
+  --canvas-bg: #fafaf5;
+  --card-bg: #ffffff;
+  --text: #2e342d;
+  --text-dim: rgba(46, 52, 45, 0.58);
+  --sage: #526347;
+  --sage-08: rgba(82, 99, 71, 0.08);
+  --sage-15: rgba(82, 99, 71, 0.15);
+  --sage-20: rgba(82, 99, 71, 0.20);
+  --sage-25: rgba(82, 99, 71, 0.25);
+  --sage-45: rgba(82, 99, 71, 0.55);
+  --sage-50: rgba(82, 99, 71, 0.60);
+  --sage-interactive: rgba(82, 99, 71, 0.82);
+  --sage-label: rgba(82, 99, 71, 0.68);
+  --card-shadow: 0 1px 4px rgba(46, 52, 45, 0.05);
+  --card-shadow-lift: 0 8px 24px rgba(46, 52, 45, 0.16);
+  --radius: 12px;
+  --font-display: 'Manrope', sans-serif;
+  --font-body: 'Plus Jakarta Sans', sans-serif;
+}
+
+html, body {
+  height: 100%;
+  background: var(--canvas-bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+  overflow: hidden; /* Lock — no native scrolling */
+}
+
+/* ── Vertical flow container ── */
+.flow-container {
+  height: 100vh;
+  height: 100dvh;
+  overflow: hidden;
+  position: relative;
+}
+
+/* ── Phase navigation buttons ── */
+.phase-nav-btn {
+  position: fixed;
+  bottom: 32px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 100;
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 13px;
+  color: var(--sage-interactive);
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 16px;
+  transition: color 150ms, transform 200ms ease, opacity 200ms;
+}
+.phase-nav-btn .nav-arrow {
+  font-size: 16px;
+  line-height: 1;
+  transition: transform 200ms ease;
+}
+.phase-nav-btn:hover {
+  color: var(--sage);
+}
+.phase-nav-btn:hover .nav-arrow {
+  transform: translateY(2px);
+}
+.phase-nav-btn:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+.phase:not(.phase-active) .phase-nav-btn {
+  display: none;
+}
+
+/* ── Phase states ── */
+.phase {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto; /* Allow internal scrolling within a phase */
+  transition: transform 400ms cubic-bezier(0.25, 0.1, 0.25, 1), opacity 250ms ease;
+}
+
+.phase-pending {
+  transform: translateY(100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.phase-active {
+  transform: translateY(0);
+  opacity: 1;
+  pointer-events: all;
+  z-index: 10;
+}
+
+.phase-completed {
+  transform: translateY(-100%);
+  opacity: 0;
+  pointer-events: none;
+  z-index: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .phase {
+    transition: opacity 100ms ease, transform 0ms;
+  }
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━
+   PHASE 1: DUMP
+━━━━━━━━━━━━━━━━━━━━━━ */
+#phase-dump {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: var(--canvas-bg);
+}
+
+.dump-inner {
+  width: min(600px, 100% - 48px);
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-height: 60vh;
+  justify-content: center;
+}
+
+.dump-input-wrap {
+  position: relative;
+}
+
+#dump-input {
+  width: 100%;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid var(--sage-15);
+  padding: 12px 0;
+  font-family: var(--font-body);
+  font-size: 24px;
+  color: var(--text);
+  outline: none;
+  caret-color: var(--sage);
+  transition: border-color 200ms;
+  text-align: left;
+}
+
+/* When has tasks, always show the underline so input remains findable */
+.dump-input-wrap.has-value #dump-input {
+  border-bottom: 1px solid var(--sage-15);
+}
+
+#dump-input:focus {
+  border-bottom-color: transparent;
+}
+
+#dump-input::placeholder {
+  color: rgba(46, 52, 45, 0.28);
+  font-style: normal;
+}
+
+/* Phase 4.4: animated underline expanding from center */
+.input-underline {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--sage);
+  transition: width 500ms cubic-bezier(0.4, 0, 0.2, 1);
+  opacity: 0.3;
+  border-radius: 1px;
+}
+/* Underline shows during typewriter animation AND on focus */
+.dump-input-wrap.typewriter-active .input-underline,
+.dump-input-wrap:focus-within .input-underline {
+  width: 100%;
+}
+
+/* Phase 4.4: "Press enter to dump" hint */
+.dump-hint {
+  display: block;
+  text-align: left;
+  font-family: var(--font-display);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: var(--sage-label);
+  opacity: 0;
+  transition: opacity 300ms ease;
+  padding-top: 8px;
+  pointer-events: none;
+}
+/* Show hint on focus OR when tasks exist (so input stays findable) */
+.dump-input-wrap:focus-within + .dump-hint,
+.dump-input-wrap:focus-within ~ .dump-hint,
+.dump-input-wrap.has-value + .dump-hint,
+.dump-input-wrap.has-value ~ .dump-hint {
+  opacity: 0.4;
+}
+
+.dump-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 16px;
+  max-height: 45vh;
+  overflow-y: auto;
+  padding-bottom: 60px; /* space to scroll past the fade and see bottom items */
+  scrollbar-width: none;
+}
+.dump-cards::-webkit-scrollbar { display: none; }
+/* Fade extends to bottom — always present when overflow, cards scroll beneath it */
+.dump-cards.has-overflow {
+  -webkit-mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 95%);
+  mask-image: linear-gradient(to bottom, black 0%, black 50%, transparent 95%);
+}
+
+.dump-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text);
+  opacity: 0;
+  transform: translateY(-8px);
+  animation: cardSlideIn 100ms ease-out forwards;
+  display: flex;
+  align-items: center;
+  position: relative;
+}
+
+.dump-card .dump-delete {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 14px;
+  line-height: 1;
+  color: var(--sage-25);
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+  opacity: 0;
+  transition: opacity 150ms ease, color 150ms ease;
+  font-family: var(--font-body);
+}
+.dump-card:hover .dump-delete,
+.dump-card:focus-within .dump-delete {
+  opacity: 1;
+}
+.dump-card .dump-delete:hover {
+  color: var(--sage);
+}
+.dump-card .dump-delete:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 2px;
+  border-radius: 4px;
+  opacity: 1;
+}
+
+.dump-card.example-card {
+  opacity: 0.5;
+  border: 1px dashed var(--sage-15);
+  box-shadow: none;
+}
+.dump-card.example-card .dump-delete { display: none; }
+
+.dump-card .card-text-dump { flex: 1; }
+
+@keyframes cardSlideIn {
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dump-card {
+    animation: cardFadeIn 80ms ease forwards;
+    transform: none;
+  }
+  @keyframes cardFadeIn {
+    to { opacity: 1; }
+  }
+}
+
+.dump-footer {
+  display: flex;
+  justify-content: flex-start;
+  gap: 16px;
+  padding: 16px 0 8px;
+  min-height: 48px;
+  align-items: center;
+}
+
+/* Phase 4.3: "suggest tasks" button */
+#btn-suggest-tasks {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--sage-45);
+  cursor: pointer;
+  padding: 4px 0;
+  letter-spacing: 0.01em;
+  transition: color 150ms;
+}
+#btn-suggest-tasks:hover { color: var(--sage); }
+#btn-suggest-tasks:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* #btn-ready-sort visibility — controlled by .visible class */
+#btn-ready-sort {
+  opacity: 0;
+  pointer-events: none;
+}
+#btn-ready-sort.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+/* ━━━━━━━━━━━━━━━━━━━━━━
+   PHASE 2a: SORT URGENCY
+━━━━━━━━━━━━━━━━━━━━━━ */
+.sort-section {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: var(--canvas-bg);
+}
+
+.sort-inner {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  overflow: visible;
+  padding: 48px 0 24px;
+  justify-content: center;
+}
+
+.sort-progress {
+  font-family: var(--font-display);
+  font-size: 12px;
+  color: var(--sage-interactive);
+  margin-bottom: 24px;
+  letter-spacing: 0.02em;
+}
+
+.sort-header {
+  font-family: var(--font-display);
+  font-size: 18px;
+  font-weight: 500;
+  color: var(--text);
+  line-height: 1.45;
+  margin-bottom: 28px;
+  white-space: pre-line;
+}
+
+/* Sort pass background tints */
+/* Phase tints — gradient edges blend seamlessly between pages */
+#phase-dump {
+  background: linear-gradient(
+    to bottom,
+    var(--canvas-bg) 0%,
+    var(--canvas-bg) 70%,
+    var(--canvas-bg) 100%
+  );
+}
+
+.sort-pass-urgency {
+  background: linear-gradient(
+    to bottom,
+    var(--canvas-bg) 0%,
+    rgba(200, 140, 60, 0.035) 30%,
+    rgba(200, 140, 60, 0.035) 70%,
+    var(--canvas-bg) 100%
+  );
+}
+
+.sort-pass-importance {
+  background: linear-gradient(
+    to bottom,
+    var(--canvas-bg) 0%,
+    rgba(190, 170, 50, 0.03) 30%,
+    rgba(190, 170, 50, 0.03) 70%,
+    var(--canvas-bg) 100%
+  );
+}
+
+#phase-scatter {
+  background: linear-gradient(
+    to bottom,
+    var(--canvas-bg) 0%,
+    rgba(82, 99, 71, 0.02) 30%,
+    rgba(82, 99, 71, 0.02) 70%,
+    var(--canvas-bg) 100%
+  );
+}
+
+/* Phase 1.1: NO left border accents — removed */
+
+.sort-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: none;
+  overflow-y: auto;
+  padding-bottom: 80px;
+  scrollbar-width: none;
+  position: relative;
+  max-height: 60vh;
+}
+.sort-list::-webkit-scrollbar { display: none; }
+
+.sort-card {
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 10px 14px;
+  font-size: 13px;
+  color: var(--text);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: grab;
+  flex-shrink: 0;
+  min-height: 40px;
+  user-select: none;
+  touch-action: manipulation;
+  transition: box-shadow 150ms ease, transform 200ms cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+}
+
+.sort-card:active { cursor: grabbing; }
+
+.sort-card.dragging {
+  box-shadow: var(--card-shadow-lift);
+  opacity: 0.96;
+  z-index: 100;
+  cursor: grabbing;
+  transition: box-shadow 150ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sort-card { transition: none; }
+}
+
+.sort-card .rank {
+  font-family: var(--font-display);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--sage-interactive);
+  min-width: 18px;
+  text-align: right;
+}
+
+.sort-card .handle {
+  color: var(--sage-25);
+  font-size: 14px;
+  line-height: 1;
+  cursor: grab;
+  padding: 8px;
+  margin: -8px;
+  touch-action: none;
+}
+
+.sort-card .card-text {
+  flex: 1;
+}
+
+/* ── Swipe-to-delete wrapper ── */
+.sort-card-wrap {
+  position: relative;
+  overflow: visible;
+  border-radius: var(--radius);
+  flex-shrink: 0;
+}
+
+
+
+/* ━━━━━━━━━━━━━━━━━━━━━━
+   PHASE 3: SCATTER
+━━━━━━━━━━━━━━━━━━━━━━ */
+#phase-scatter {
+  background: var(--canvas-bg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden; /* scatter should not internally scroll */
+}
+
+.scatter-canvas {
+  position: relative;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+}
+
+/* Dot grid — fades at edges via mask, doesn't affect cards/labels */
+.scatter-canvas::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, rgba(82, 99, 71, 0.15) 1px, transparent 1px);
+  background-size: 20px 20px;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, black 40%, transparent 80%);
+  mask-image: radial-gradient(ellipse 70% 70% at center, black 40%, transparent 80%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* SVG quadrant lines — also fade at edges */
+.quadrant-svg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  -webkit-mask-image: radial-gradient(ellipse 70% 70% at center, black 40%, transparent 80%);
+  mask-image: radial-gradient(ellipse 70% 70% at center, black 40%, transparent 80%);
+}
+
+.q-line {
+  stroke: var(--sage-20);
+  stroke-width: 1;
+  fill: none;
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+}
+
+.q-line.drawn {
+  transition: stroke-dashoffset 300ms cubic-bezier(0.4, 0, 0.2, 1);
+  stroke-dashoffset: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .q-line.drawn {
+    transition: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+/* Quadrant corner labels */
+.corner-label {
+  position: absolute;
+  font-family: var(--font-display);
+  color: var(--sage-label);
+  letter-spacing: 0.04em;
+  font-weight: 600;
+  white-space: nowrap;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px 4px;
+  font-size: 14px;
+  z-index: 5;
+}
+.corner-label:hover {
+  color: var(--sage);
+}
+.corner-label.now {
+  color: var(--sage-interactive);
+  top: 32px;
+  right: 32px;
+}
+.corner-label.soon {
+  top: 32px;
+  left: 32px;
+}
+.corner-label.quick {
+  bottom: 56px;
+  right: 32px;
+}
+.corner-label.later {
+  bottom: 56px;
+  left: 32px;
+}
+
+/* Quadrant hints — below their label */
+.corner-hint {
+  position: absolute;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: rgba(46, 52, 45, 0.35);
+  pointer-events: none;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+  z-index: 5;
+}
+.corner-hint.now { top: 52px; right: 32px; }
+.corner-hint.soon { top: 52px; left: 32px; }
+.corner-hint.quick { bottom: 40px; right: 32px; }
+.corner-hint.later { bottom: 40px; left: 32px; }
+
+/* Axis labels — away from corners */
+.axis-label {
+  position: absolute;
+  font-family: var(--font-display);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sage-label);
+  pointer-events: none;
+  z-index: 5;
+}
+.axis-urgent {
+  top: calc(50% + 12px);
+  right: 32px;
+}
+.axis-important {
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+}
+
+/* Quadrant regions for accessibility */
+.quadrant-region {
+  position: absolute;
+  pointer-events: none;
+}
+
+/* Corner popovers */
+.corner-popover {
+  position: absolute;
+  background: var(--sage-08);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.5;
+  max-width: 240px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms ease;
+  z-index: 50;
+}
+.corner-popover.open {
+  opacity: 1;
+  pointer-events: all;
+}
+.now-popover { top: 68px; right: 32px; }
+.soon-popover { top: 68px; left: 32px; }
+.quick-popover { bottom: 72px; right: 32px; }
+.later-popover { bottom: 72px; left: 32px; }
+
+/* Canvas cards */
+.canvas-card {
+  position: absolute;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow);
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 12.5px;
+  color: var(--text);
+  cursor: pointer;
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  touch-action: manipulation;
+  white-space: normal;
+  word-break: break-word;
+  max-width: 200px;
+  transition: box-shadow 180ms ease, background 150ms ease;
+  z-index: 1;
+}
+
+@media (hover: hover) {
+  .canvas-card:hover {
+    background: #fafaf5;
+    box-shadow: 0 2px 8px rgba(46, 52, 45, 0.10);
+    cursor: grab;
+  }
+}
+
+.canvas-card:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+}
+
+.canvas-card.grabbing {
+  box-shadow: var(--card-shadow-lift);
+  z-index: 100;
+  cursor: grabbing;
+}
+
+/* Strikethrough overlay — sharpie-drawn SVG */
+.card-strike {
+  position: absolute;
+  top: 0;
+  left: 10px;
+  right: 10px;
+  bottom: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+.card-strike svg {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+.card-strike .strike-path {
+  stroke: #2e342d;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  fill: none;
+  transition: stroke-dashoffset 300ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.canvas-card.done .card-text {
+  opacity: 0.35;
+  transition: opacity 300ms ease;
+}
+
+.canvas-card.done .card-strike .strike-path {
+  opacity: 0.35;
+  transition: opacity 300ms ease;
+}
+
+.canvas-card:not(.done) .card-text {
+  opacity: 1;
+  transition: opacity 300ms ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card-strike .strike-path {
+    transition: none;
+  }
+  .canvas-card.done .card-text {
+    opacity: 0.35;
+    transition: opacity 150ms ease;
+  }
+  .canvas-card.grabbing {
+    transition: box-shadow 90ms ease;
+  }
+}
+
+/* ── Phase 4.1: Timeline Scrubber — compact, bottom-right ── */
+.timeline-scrubber {
+  position: absolute;
+  bottom: 12px;
+  right: 16px;
+  width: 140px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+  opacity: 0.4;
+  transition: opacity 200ms;
+  z-index: 40;
+}
+.timeline-scrubber:hover { opacity: 0.7; }
+
+.scrubber-label {
+  font-family: var(--font-display);
+  font-size: 7px;
+  color: var(--sage-45);
+  white-space: nowrap;
+  letter-spacing: 0.04em;
+}
+
+.scrubber-track-wrap {
+  flex: 1;
+  position: relative;
+  height: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.scrubber-track {
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--sage-08);
+  position: relative;
+}
+
+.scrubber-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 65%;
+  background: var(--sage-15);
+  border-radius: 1px;
+}
+
+.scrubber-handle {
+  position: absolute;
+  left: 65%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 1px 3px rgba(46, 52, 45, 0.12), 0 0 0 1px var(--sage-15);
+  cursor: pointer;
+}
+.scrubber-handle::before {
+  content: '';
+  position: absolute;
+  inset: -17px;
+  border-radius: 50%;
+}
+
+.scrubber-handle:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+}
+
+/* ── Empty state ── */
+.empty-state {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 200ms;
+}
+.empty-state.visible { opacity: 1; }
+.empty-state p {
+  font-family: var(--font-display);
+  font-size: 14px;
+  color: rgba(46, 52, 45, 0.3);
+  text-align: center;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+
+/* ── Start fresh ── */
+.start-fresh-wrap {
+  position: absolute;
+  bottom: 12px;
+  left: 16px;
+  z-index: 50;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 200ms;
+}
+.start-fresh-wrap.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+#btn-start-fresh {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--sage-interactive);
+  cursor: pointer;
+  padding: 4px 0;
+  letter-spacing: 0.02em;
+  transition: color 150ms, background 150ms;
+}
+#btn-start-fresh.confirming {
+  color: var(--sage);
+  background: var(--sage-08);
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+#btn-start-fresh:hover { color: var(--sage); }
+#btn-start-fresh:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 4px;
+  border-radius: 4px;
+}
+
+/* ── Aria live region ── */
+#aria-live {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0,0,0,0);
+  white-space: nowrap;
+}
+
+/* ── Phase 4.2: add-on-canvas button — center-bottom ── */
+.canvas-add-wrap {
+  position: absolute;
+  bottom: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 200;
+}
+.canvas-add-btn {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: none;
+  background: var(--card-bg);
+  box-shadow: 0 2px 8px rgba(46,52,45,0.12);
+  cursor: pointer;
+  font-size: 22px;
+  font-weight: 300;
+  line-height: 1;
+  color: var(--sage-45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  transition: box-shadow 150ms, color 150ms;
+}
+.canvas-add-btn:hover {
+  color: var(--sage);
+  box-shadow: 0 4px 12px rgba(46,52,45,0.18);
+}
+.canvas-add-btn:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+}
+
+.canvas-add-input-wrap {
+  position: absolute;
+  bottom: 56px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 210;
+  background: var(--card-bg);
+  border-radius: var(--radius);
+  box-shadow: var(--card-shadow-lift);
+  padding: 8px 12px;
+  display: none;
+  width: 200px;
+}
+.canvas-add-input-wrap.visible { display: flex; }
+.canvas-add-input {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--sage-15);
+  background: transparent;
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text);
+  padding: 4px 0;
+  outline: none;
+  caret-color: var(--sage);
+}
+.canvas-add-input::placeholder {
+  color: rgba(46, 52, 45, 0.28);
+}
+.canvas-add-input:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* ── Typewriter animation for hero input ── */
+.typewriter {
+  position: absolute;
+  top: 50%;
+  left: 0;
+  transform: translateY(-50%);
+  font-family: var(--font-body);
+  font-size: 24px;
+  color: rgba(46, 52, 45, 0.28);
+  pointer-events: all;
+  cursor: text;
+  white-space: nowrap;
+  overflow: hidden;
+  border-right: 2px solid rgba(82, 99, 71, 0.5);
+  animation: cursorBlink 1s step-start infinite;
+  transition: color 200ms ease;
+}
+
+/* Hover on the entire input-wrap area, not just the text */
+.dump-input-wrap:hover .typewriter {
+  color: rgba(46, 52, 45, 0.75);
+}
+
+.dump-input-wrap:focus-within .typewriter,
+.dump-input-wrap.has-value .typewriter {
+  display: none;
+}
+
+@keyframes cursorBlink {
+  0%, 100% { border-right-color: rgba(82, 99, 71, 0.5); }
+  50% { border-right-color: transparent; }
+}
+
+/* ── Focus ring ── */
+button:focus-visible {
+  outline: 2px solid var(--sage);
+  outline-offset: 3px;
+  border-radius: 4px;
+}
+
+/* ── Fix 1: Guidance system ── */
+.dump-intro {
+  font-family: var(--font-display);
+  font-size: 13px;
+  color: var(--sage-label);
+  text-align: left;
+  margin-bottom: 24px;
+  line-height: 1.6;
+  transition: opacity 400ms ease;
+}
+#phase-dump.has-tasks .dump-intro {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Sort tips */
+.sort-tip {
+  text-align: center;
+  padding: 12px 0 4px;
+  min-height: 32px;
+  overflow: hidden;
+  position: relative;
+}
+.sort-tip-text {
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--sage-45);
+  line-height: 1.5;
+  display: block;
+  animation: tipSlideUp 600ms ease forwards;
+}
+
+@keyframes tipSlideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  20% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes tipSlideOut {
+  0% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sort-tip-text {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* Map guide */
+.map-guide-toggle {
+  background: none;
+  border: none;
+  font-family: var(--font-display);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--sage-interactive);
+  cursor: pointer;
+  padding: 4px 0;
+  transition: color 150ms;
+}
+.map-guide-toggle:hover { color: var(--sage); }
+.map-guide-content {
+  background: var(--sage-08);
+  border-radius: var(--radius);
+  padding: 0 20px;
+  max-width: 320px;
+  max-height: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: max-height 300ms ease, opacity 200ms ease, padding 300ms ease;
+  pointer-events: none;
+  margin-top: 4px;
+}
+.map-guide-content.open {
+  max-height: 300px;
+  opacity: 1;
+  padding: 16px 20px;
+  pointer-events: all;
+}
+.map-guide-content p {
+  font-family: var(--font-body);
+  font-size: 12px;
+  color: var(--text);
+  line-height: 1.6;
+  margin-bottom: 10px;
+}
+.map-guide-content p:last-of-type { margin-bottom: 12px; }
+.map-guide-close {
+  background: none;
+  border: none;
+  font-family: var(--font-body);
+  font-size: 11px;
+  color: var(--sage-interactive);
+  cursor: pointer;
+  padding: 2px 0;
+  transition: color 150ms;
+}
+.map-guide-close:hover { color: var(--sage); }
+
+/* ── Fix 7: Sort phase vertical centering ── */
+.sort-inner > .sort-progress,
+.sort-inner > .sort-header,
+.sort-inner > .sort-list,
+.sort-inner > .sort-tip {
+  width: min(520px, 100% - 48px);
+}
+
+/* (reduced-motion for scroll behavior removed — viewport is locked) */
+
+/* ── Mobile: touch devices ── */
+@media (pointer: coarse) {
+  .dump-card .dump-delete {
+    opacity: 0.35;
+  }
+  .dump-card .dump-delete:active {
+    opacity: 1;
+    color: var(--sage);
+  }
+  .phase-nav-btn:active { color: var(--sage); }
+  .phase-nav-btn:active .nav-arrow { transform: translateY(2px); }
+  .corner-label:active { color: var(--sage); }
+  #btn-suggest-tasks:active { color: var(--sage); }
+  .canvas-add-btn:active { color: var(--sage); box-shadow: 0 4px 12px rgba(46,52,45,0.18); }
+  #btn-start-fresh:active { color: var(--sage); }
+  .map-guide-toggle:active { color: var(--sage); }
+  .map-guide-close:active { color: var(--sage); }
+  .corner-label { padding: 12px 16px; }
+  .corner-label.now { top: 20px; right: 20px; }
+  .corner-label.soon { top: 20px; left: 20px; }
+  .corner-label.quick { bottom: 44px; right: 20px; }
+  .corner-label.later { bottom: 44px; left: 20px; }
+  .dump-card .dump-delete { min-width: 44px; min-height: 44px; display: flex; align-items: center; justify-content: center; }
+  .sort-card .handle { padding: 15px; margin: -15px; }
+  .phase-nav-btn { padding: 14px 24px; }
+  .keyboard-open .phase-nav-btn {
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 150ms ease;
+  }
+  .keyboard-open .canvas-add-wrap {
+    opacity: 0;
+    pointer-events: none;
+  }
+}
+
+/* ── Mobile: narrow screens ── */
+@media (max-width: 480px) {
+  .dump-inner { width: min(600px, 100% - 32px); }
+  .sort-inner > .sort-progress,
+  .sort-inner > .sort-header,
+  .sort-inner > .sort-list,
+  .sort-inner > .sort-tip,
+  .sort-inner > .sort-footer { width: min(520px, 100% - 32px); }
+  #dump-input { font-size: 20px; }
+  .sort-header { font-size: 16px !important; }
+  .canvas-card { max-width: 160px; }
+  .corner-label { font-size: 12px; padding: 8px 10px; }
+  .corner-label.now, .corner-label.soon { top: 8px; }
+  .corner-label.quick, .corner-label.later { bottom: 28px; }
+  .corner-label.now, .corner-label.quick { right: 8px; }
+  .corner-label.soon, .corner-label.later { left: 8px; }
+  .corner-hint { display: none; }
+  .axis-label { font-size: 9px; }
+  .axis-urgent { right: 8px; top: calc(50% + 6px); }
+  .axis-important { top: 6px; }
+  .dump-cards { gap: 4px; }
+  .sort-list { gap: 4px; }
+}
+</style>
+</head>
+<body>
+
+<h1 class="sr-only">Your clarity map</h1>
+<div id="aria-live" aria-live="polite" aria-atomic="true"></div>
+
+<div class="flow-container">
+
+  <!-- ═══════════════════════════════════════
+       PHASE 1: DUMP
+  ═══════════════════════════════════════ -->
+  <section id="phase-dump" class="phase phase-active" aria-label="Brain dump — add everything on your mind">
+    <div class="dump-inner" id="dump-inner">
+      <h2 class="sr-only">Brain dump</h2>
+      <p class="dump-intro">Your head is full. That's why you're here.<br>
+Write out everything — don't sort yet, don't judge. Just get it out.</p>
+      <div class="dump-input-wrap">
+        <input
+          type="text"
+          id="dump-input"
+          placeholder=""
+          aria-label="Add a task"
+          autocomplete="off"
+          autocorrect="off"
+        >
+        <span class="typewriter" id="typewriter" aria-hidden="true"></span>
+        <div class="input-underline"></div>
+      </div>
+      <span class="dump-hint" id="dump-hint">Press enter to dump</span>
+      <div class="dump-cards" id="dump-cards" role="list" aria-label="Tasks added"></div>
+      <div class="dump-footer">
+        <button id="btn-suggest-tasks" aria-label="Suggest example tasks">suggest tasks</button>
+      </div>
+
+      <!-- Map guide -->
+      <button class="map-guide-toggle" id="map-guide-toggle">what is this method?</button>
+      <div class="map-guide-content" id="map-guide-content">
+        <p>This method gives everything a relative position: compared to the rest of your list, how pressing is this? How meaningful?</p>
+        <p>Start from the top-right corner and work your way down-left. The strikethroughs accumulate — that record is worth keeping.</p>
+        <button class="map-guide-close" id="map-guide-close">got it</button>
+      </div>
+    </div>
+    <button class="phase-nav-btn" id="btn-ready-sort" aria-label="Ready to sort your tasks">
+      <span class="nav-label">ready to sort</span>
+      <span class="nav-arrow" aria-hidden="true">&#8595;</span>
+    </button>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       PHASE 2a: SORT URGENCY
+  ═══════════════════════════════════════ -->
+  <section id="phase-sort-urgency" class="phase phase-pending sort-section sort-pass-urgency" aria-label="Sort tasks by urgency" aria-hidden="true">
+    <div class="sort-inner" id="urgency-inner">
+      <div class="sort-progress" aria-live="polite">sorting urgency &#8212; 1 of 2</div>
+      <h2 class="sort-header"><span aria-hidden="true" style="opacity:0.4">&#128293;</span> Drag to order by urgency.
+Most urgent at the top.</h2>
+      <div
+        id="sort-list-urgency"
+        class="sort-list"
+        role="list"
+        aria-label="Tasks to sort by urgency &#8212; drag to reorder"
+      ></div>
+      <div class="sort-tip" id="sort-tip-urgency" aria-live="polite">
+        <span class="sort-tip-text"></span>
+      </div>
+    </div>
+    <button class="phase-nav-btn" id="btn-urgency-done" aria-label="Done sorting urgency">
+      <span class="nav-label">done sorting</span>
+      <span class="nav-arrow" aria-hidden="true">&#8595;</span>
+    </button>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       PHASE 2b: SORT IMPORTANCE
+  ═══════════════════════════════════════ -->
+  <section id="phase-sort-importance" class="phase phase-pending sort-section sort-pass-importance" aria-label="Sort tasks by importance" aria-hidden="true">
+    <div class="sort-inner" id="importance-inner">
+      <div class="sort-progress" aria-live="polite">sorting importance &#8212; 2 of 2</div>
+      <h2 class="sort-header"><span aria-hidden="true" style="opacity:0.4">&#127807;</span> Now order by importance.
+Most important at the top.</h2>
+      <div
+        id="sort-list-importance"
+        class="sort-list"
+        role="list"
+        aria-label="Tasks to sort by importance &#8212; drag to reorder"
+      ></div>
+      <div class="sort-tip" id="sort-tip-importance" aria-live="polite">
+        <span class="sort-tip-text"></span>
+      </div>
+    </div>
+    <button class="phase-nav-btn" id="btn-importance-done" aria-label="Done sorting importance">
+      <span class="nav-label">done sorting</span>
+      <span class="nav-arrow" aria-hidden="true">&#8595;</span>
+    </button>
+  </section>
+
+  <!-- ═══════════════════════════════════════
+       PHASE 3: SCATTER
+  ═══════════════════════════════════════ -->
+  <section id="phase-scatter" class="phase phase-pending" aria-label="Your tasks on the map" aria-hidden="true">
+    <h2 class="sr-only">Your map</h2>
+    <div class="scatter-canvas" id="scatter-canvas">
+      <svg class="quadrant-svg" id="quadrant-svg" aria-hidden="true">
+        <line id="vline-up" class="q-line" x1="50%" y1="50%" x2="50%" y2="0%"/>
+        <line id="vline-down" class="q-line" x1="50%" y1="50%" x2="50%" y2="100%"/>
+        <line id="hline-left" class="q-line" x1="50%" y1="50%" x2="0%" y2="50%"/>
+        <line id="hline-right" class="q-line" x1="50%" y1="50%" x2="100%" y2="50%"/>
+      </svg>
+
+      <div class="quadrant-region" id="q-now" style="top:0;right:0;width:50%;height:50%;" role="region" aria-label="Now — urgent and important"></div>
+      <div class="quadrant-region" id="q-soon" style="top:0;left:0;width:50%;height:50%;" role="region" aria-label="Soon — important, not urgent"></div>
+      <div class="quadrant-region" id="q-quick" style="bottom:0;right:0;width:50%;height:50%;" role="region" aria-label="Quick — urgent, not important"></div>
+      <div class="quadrant-region" id="q-later" style="bottom:0;left:0;width:50%;height:50%;" role="region" aria-label="Later — not urgent, not important"></div>
+
+      <button class="corner-label now" aria-label="Now — urgent and important">Now</button>
+      <div class="corner-popover now-popover" aria-hidden="true">These need your attention today. Crises, hard deadlines, urgent problems. Do them first, then move on.</div>
+      <button class="corner-label soon" aria-label="Soon — important, not urgent">Soon</button>
+      <div class="corner-popover soon-popover" aria-hidden="true">Important but not pressing. Schedule time for these — they build the life you actually want.</div>
+      <button class="corner-label quick" aria-label="Quick — urgent, not important">Quick</button>
+      <div class="corner-popover quick-popover" aria-hidden="true">Feels urgent but isn't meaningful. Do them fast without overthinking, delegate, or batch them.</div>
+      <button class="corner-label later" aria-label="Later — not urgent, not important">Later</button>
+      <div class="corner-popover later-popover" aria-hidden="true">Neither urgent nor important. Reconsider whether these belong on your list at all, or let them go.</div>
+
+      <span class="corner-hint now" aria-hidden="true">crises &amp; deadlines</span>
+      <span class="corner-hint soon" aria-hidden="true">plan &amp; schedule</span>
+      <span class="corner-hint quick" aria-hidden="true">do fast, don't overthink</span>
+      <span class="corner-hint later" aria-hidden="true">reconsider or let go</span>
+
+      <span class="axis-label axis-urgent" aria-hidden="true">urgent &#8594;</span>
+      <span class="axis-label axis-important" aria-hidden="true">important &#8593;</span>
+
+      <div class="empty-state" id="empty-state">
+        <p>Nothing here yet.
+Start by adding what's on your mind.</p>
+      </div>
+
+      <div class="canvas-add-wrap" id="canvas-add-wrap">
+        <div class="canvas-add-input-wrap" id="canvas-add-input-wrap">
+          <input type="text" class="canvas-add-input" id="canvas-add-input" placeholder="add a task" aria-label="Add a new task to the map" autocomplete="off">
+        </div>
+        <button class="canvas-add-btn" id="canvas-add-btn" aria-label="Add new task to the map">+</button>
+      </div>
+
+      <!-- Phase 4.1: timeline scrubber inside canvas, bottom-right -->
+      <div class="timeline-scrubber" role="group" aria-label="Timeline history">
+        <span class="scrubber-label">Mar 20</span>
+        <div class="scrubber-track-wrap">
+          <div class="scrubber-track">
+            <div class="scrubber-fill"></div>
+          </div>
+          <div
+            class="scrubber-handle"
+            aria-hidden="true"
+          ></div>
+        </div>
+        <span class="scrubber-label">Today</span>
+      </div>
+
+      <!-- Start fresh inside scatter canvas -->
+      <div class="start-fresh-wrap" id="start-fresh-wrap">
+        <button id="btn-start-fresh" aria-label="Start fresh">start fresh</button>
+      </div>
+    </div>
+  </section>
+
+</div><!-- .flow-container -->
+
+<script>
+// ──────────────────────────────────────────────────────────────────────────────
+// State
+// ──────────────────────────────────────────────────────────────────────────────
+
+const SAMPLE_TASKS = [
+  { text: "Finish quarterly report", urgency: 1, importance: 1 },  // Now (top-right)
+  { text: "Call back Dr. Chen", urgency: 2, importance: 2 },       // Now-ish
+  { text: "Start exercise routine", urgency: 7, importance: 1 },   // Soon (top-left) — NOT urgent but important
+  { text: "Research school options", urgency: 8, importance: 3 },   // Soon
+  { text: "Reply to group chat", urgency: 1, importance: 7 },      // Quick (bottom-right) — urgent but NOT important
+  { text: "Return Amazon package", urgency: 3, importance: 8 },    // Quick
+  { text: "Reorganize bookshelf", urgency: 6, importance: 6 },     // Later (bottom-left)
+  { text: "Fix printer settings", urgency: 5, importance: 5 },     // Center
+];
+
+let state = {
+  tasks: [],
+  urgencyOrder: [],
+  importanceOrder: [],
+  phase: 'dump',     // 'dump' | 'sort-urgency' | 'sort-importance' | 'scatter'
+  cardPositions: {},
+  done: new Set(),
+};
+
+let idCounter = 0;
+const makeId = () => `t${++idCounter}`;
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Utility
+// ──────────────────────────────────────────────────────────────────────────────
+
+function prefersReducedMotion() {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function announce(msg) {
+  const el = document.getElementById('aria-live');
+  el.textContent = '';
+  requestAnimationFrame(() => { el.textContent = msg; });
+}
+
+function escapeHtml(str) {
+  const d = document.createElement('div');
+  d.appendChild(document.createTextNode(str));
+  return d.innerHTML;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Phase transitions — vertical flow
+// ──────────────────────────────────────────────────────────────────────────────
+
+const PHASE_ORDER = ['dump', 'sort-urgency', 'sort-importance', 'scatter'];
+const PHASE_IDS = {
+  'dump': 'phase-dump',
+  'sort-urgency': 'phase-sort-urgency',
+  'sort-importance': 'phase-sort-importance',
+  'scatter': 'phase-scatter',
+};
+
+function showPhase(targetPhase) {
+  const targetIdx = PHASE_ORDER.indexOf(targetPhase);
+
+  // Restore transitions on ALL phases before switching
+  // (rubber-band pull sets transition:none on active phase)
+  document.querySelectorAll('.phase').forEach(el => {
+    el.style.transition = '';
+    el.style.transform = '';
+  });
+
+  // Force a reflow so the transition restoration takes effect
+  // before we change classes
+  document.body.offsetHeight;
+
+  PHASE_ORDER.forEach((phase, idx) => {
+    const el = document.getElementById(PHASE_IDS[phase]);
+    el.classList.remove('phase-pending', 'phase-active', 'phase-completed');
+
+    if (idx < targetIdx) {
+      el.classList.add('phase-completed'); // slides up and out
+      el.setAttribute('aria-hidden', 'true');
+    } else if (idx === targetIdx) {
+      el.classList.add('phase-active'); // slides into view
+      el.scrollTop = 0;
+      el.removeAttribute('aria-hidden');
+    } else {
+      el.classList.add('phase-pending'); // stays below
+      el.setAttribute('aria-hidden', 'true');
+    }
+  });
+
+  state.phase = targetPhase;
+
+  const sfWrap = document.getElementById('start-fresh-wrap');
+  if (sfWrap) sfWrap.classList.toggle('visible', targetPhase === 'scatter');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Phase 1: DUMP
+// ──────────────────────────────────────────────────────────────────────────────
+
+function initDump() {
+  const input = document.getElementById('dump-input');
+  const btnSort = document.getElementById('btn-ready-sort');
+  const btnSuggest = document.getElementById('btn-suggest-tasks');
+
+  renderDumpCards();
+  updateSortButton();
+  updateDumpOverflow();
+  // Fix 1: toggle has-tasks on dump phase for intro fade
+  document.getElementById('phase-dump').classList.toggle('has-tasks', state.tasks.length > 0);
+
+  // Toggle .has-value class — hide typewriter when input has text OR tasks exist
+  input.addEventListener('input', () => {
+    input.parentElement.classList.toggle('has-value', input.value.length > 0 || state.tasks.length > 0);
+  });
+
+  // Typewriter: hide on focus, restart on blur if empty
+  input.addEventListener('focus', () => {
+    stopTypewriter();
+  });
+  input.addEventListener('blur', () => {
+    if (!input.value && state.tasks.length === 0) {
+      startTypewriter();
+    }
+  });
+
+  // Initialize typewriter animation
+  initTypewriter();
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') {
+      const text = input.value.trim();
+      if (text) {
+        addTask(text, true);
+        input.value = '';
+        updateSortButton();
+        saveState();
+      }
+      e.preventDefault();
+    }
+  });
+
+  // Phase 4.3: "suggest tasks" button
+  if (btnSuggest) {
+    btnSuggest.addEventListener('click', () => {
+      const sampleIds = [];
+      SAMPLE_TASKS.forEach(sample => {
+        const task = { id: makeId(), text: sample.text };
+        state.tasks.unshift(task);
+        sampleIds.push({ id: task.id, text: sample.text, urgency: sample.urgency, importance: sample.importance });
+      });
+      // Set urgencyOrder: sort by urgency value ascending (most urgent first = lowest number)
+      state.urgencyOrder = [...state.tasks].sort((a, b) => {
+        const sa = SAMPLE_TASKS.find(s => s.text === a.text);
+        const sb = SAMPLE_TASKS.find(s => s.text === b.text);
+        return (sa?.urgency || 99) - (sb?.urgency || 99);
+      }).map(t => t.id);
+      // Set importanceOrder: sort by importance value ascending (most important first = lowest number)
+      state.importanceOrder = [...state.tasks].sort((a, b) => {
+        const sa = SAMPLE_TASKS.find(s => s.text === a.text);
+        const sb = SAMPLE_TASKS.find(s => s.text === b.text);
+        return (sa?.importance || 99) - (sb?.importance || 99);
+      }).map(t => t.id);
+      renderDumpCards();
+      updateSortButton();
+      // Add has-tasks class for dump intro fade
+      document.getElementById('phase-dump').classList.add('has-tasks');
+      btnSuggest.style.opacity = '0';
+      btnSuggest.style.pointerEvents = 'none';
+      saveState();
+      announce('8 tasks added. Drag to reorder or add your own.');
+    });
+  }
+
+  btnSort.addEventListener('click', () => {
+    if (state.tasks.length === 0) return;
+    transitionToSortUrgency();
+  });
+  btnSort.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      if (state.tasks.length > 0) transitionToSortUrgency();
+    }
+  });
+
+}
+
+function addTask(text, animate) {
+  const task = { id: makeId(), text };
+  state.tasks.unshift(task);
+  stopTypewriter();
+  document.getElementById('phase-dump').classList.add('has-tasks');
+  document.querySelector('.dump-input-wrap')?.classList.add('has-value');
+  if (!animate) return;
+  const cardsEl = document.getElementById('dump-cards');
+  const card = createDumpCard(task);
+  cardsEl.prepend(card);
+  // Hide suggest button once user starts typing
+  const suggestBtn = document.getElementById('btn-suggest-tasks');
+  if (suggestBtn && state.tasks.length > 0) {
+    suggestBtn.style.opacity = '0';
+    suggestBtn.style.pointerEvents = 'none';
+  }
+  card.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+  updateDumpOverflow();
+}
+
+function createDumpCard(task) {
+  const card = document.createElement('div');
+  card.className = 'dump-card';
+  card.setAttribute('role', 'listitem');
+  card.dataset.id = task.id;
+  card.innerHTML = `<span class="card-text-dump">${escapeHtml(task.text)}</span>`;
+  const delBtn = document.createElement('button');
+  delBtn.className = 'dump-delete';
+  delBtn.setAttribute('aria-label', `Remove ${task.text}`);
+  delBtn.textContent = '\u00d7';
+  delBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    deleteDumpTask(task.id);
+  });
+  card.appendChild(delBtn);
+  return card;
+}
+
+function deleteDumpTask(id) {
+  state.tasks = state.tasks.filter(t => t.id !== id);
+  const card = document.querySelector(`.dump-card[data-id="${id}"]`);
+  if (card) {
+    card.style.transition = 'opacity 150ms ease, transform 150ms ease';
+    card.style.opacity = '0';
+    card.style.transform = 'translateX(8px)';
+    setTimeout(() => { card.remove(); updateDumpOverflow(); }, 160);
+  }
+  document.getElementById('phase-dump').classList.toggle('has-tasks', state.tasks.length > 0);
+  // Toggle has-value on input wrap — hides typewriter when tasks exist
+  const inputWrap = document.querySelector('.dump-input-wrap');
+  if (inputWrap) inputWrap.classList.toggle('has-value', state.tasks.length > 0);
+  // Re-show suggest button and restart typewriter when all tasks deleted
+  if (state.tasks.length === 0) {
+    const suggestBtn = document.getElementById('btn-suggest-tasks');
+    if (suggestBtn) { suggestBtn.style.opacity = ''; suggestBtn.style.pointerEvents = ''; }
+    startTypewriter();
+  }
+  updateSortButton();
+  saveState();
+}
+
+function renderDumpCards() {
+  const cardsEl = document.getElementById('dump-cards');
+  cardsEl.innerHTML = '';
+  state.tasks.forEach(task => {
+    const card = createDumpCard(task);
+    cardsEl.appendChild(card);
+  });
+  updateSortButton();
+  updateDumpOverflow();
+  // Toggle suggest button and typewriter visibility
+  const suggestBtn = document.getElementById('btn-suggest-tasks');
+  const inputWrap = document.querySelector('.dump-input-wrap');
+  if (state.tasks.length > 0) {
+    if (suggestBtn) { suggestBtn.style.opacity = '0'; suggestBtn.style.pointerEvents = 'none'; }
+    if (inputWrap) inputWrap.classList.add('has-value');
+    stopTypewriter();
+  } else {
+    if (suggestBtn) { suggestBtn.style.opacity = ''; suggestBtn.style.pointerEvents = ''; }
+    if (inputWrap) inputWrap.classList.remove('has-value');
+  }
+}
+
+function updateSortButton() {
+  const btn = document.getElementById('btn-ready-sort');
+  btn.classList.toggle('visible', state.tasks.length > 0);
+}
+
+function transitionToSortUrgency() {
+  // Preserve existing order if it has all task IDs (e.g. from sample tasks)
+  const taskIds = new Set(state.tasks.map(t => t.id));
+  const urgencyValid = state.urgencyOrder.length === state.tasks.length &&
+    state.urgencyOrder.every(id => taskIds.has(id));
+  if (!urgencyValid) {
+    state.urgencyOrder = state.tasks.map(t => t.id);
+  }
+  const importanceValid = state.importanceOrder.length === state.tasks.length &&
+    state.importanceOrder.every(id => taskIds.has(id));
+  if (!importanceValid) {
+    state.importanceOrder = [...state.urgencyOrder];
+  }
+  renderSortList('urgency');
+  showPhase('sort-urgency');
+  saveState();
+  announce('Sorting phase. Drag tasks to order by urgency. Most urgent at the top.');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Phase 2: SORT — FLIP-based drag to reorder
+// ──────────────────────────────────────────────────────────────────────────────
+
+let dragState = null;
+let canvasDragActive = false;
+
+function renderSortList(pass) {
+  const listId = pass === 'urgency' ? 'sort-list-urgency' : 'sort-list-importance';
+  const listEl = document.getElementById(listId);
+  const order = pass === 'urgency' ? state.urgencyOrder : state.importanceOrder;
+
+  listEl.innerHTML = '';
+  order.forEach((id, idx) => {
+    const task = state.tasks.find(t => t.id === id);
+    if (!task) return;
+
+    const wrap = document.createElement('div');
+    wrap.className = 'sort-card-wrap';
+
+    const card = document.createElement('div');
+    card.className = 'sort-card';
+    card.setAttribute('draggable', 'false');
+    card.dataset.id = id;
+    card.setAttribute('role', 'listitem');
+    card.setAttribute('aria-label', `${task.text}, position ${idx + 1} of ${order.length}`);
+    card.tabIndex = 0;
+
+    card.innerHTML = `
+      <span class="rank" aria-hidden="true">${idx + 1}</span>
+      <span class="card-text">${escapeHtml(task.text)}</span>
+      <span class="handle" aria-hidden="true">\u2807</span>
+    `;
+
+    // ── Double-click to edit ──
+    card.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      const textEl = card.querySelector('.card-text');
+      const originalText = textEl.textContent;
+      const taskId = card.dataset.id;
+
+      // Create input
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = originalText;
+      input.className = 'sort-edit-input';
+      input.style.cssText = 'width:100%;border:none;background:transparent;font:inherit;color:inherit;outline:none;padding:0;';
+
+      textEl.textContent = '';
+      textEl.appendChild(input);
+      input.focus();
+      // Place cursor at end instead of selecting all
+      input.setSelectionRange(input.value.length, input.value.length);
+
+      function save() {
+        // Guard against double-fire (blur after Enter)
+        if (!input.parentNode) return;
+        const newText = input.value.trim();
+        if (newText && newText !== originalText) {
+          // Update state
+          const t = state.tasks.find(t => t.id === taskId);
+          if (t) t.text = newText;
+          saveState();
+        }
+        const finalText = newText || originalText;
+        textEl.textContent = finalText;
+        input.remove();
+        // Update aria-label
+        const order = pass === 'urgency' ? state.urgencyOrder : state.importanceOrder;
+        const pos = order.indexOf(taskId);
+        card.setAttribute('aria-label', `${finalText}, position ${pos + 1} of ${order.length}`);
+      }
+
+      function cancel() {
+        textEl.textContent = originalText;
+        input.remove();
+      }
+
+      input.addEventListener('keydown', (ev) => {
+        if (ev.key === 'Enter') { ev.preventDefault(); save(); }
+        if (ev.key === 'Escape') { ev.preventDefault(); cancel(); }
+        ev.stopPropagation(); // prevent sort keyboard handlers
+      });
+
+      input.addEventListener('blur', save);
+    });
+
+    // Double-tap fallback for mobile
+    let lastTapTime = 0;
+    card.addEventListener('pointerup', (e) => {
+      if (card._suppressNextClick) return;
+      if (card.querySelector('[contenteditable="true"]') || card.querySelector('.sort-edit-input')) return;
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        card.dispatchEvent(new Event('dblclick', { bubbles: true }));
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+    });
+
+    // ── Drag to reorder ──
+    // On touch: only the handle initiates drag (so card body scrolls the page)
+    // On mouse: anywhere on the card initiates drag
+    card.addEventListener('pointerdown', (e) => {
+      if (card.querySelector('.sort-edit-input')) return;
+      if (e.button !== 0 && e.pointerType !== 'touch') return;
+      if (e.pointerType === 'touch' && !e.target.closest('.handle')) return;
+      onSortPointerDown(e, pass);
+    });
+
+    card.addEventListener('keydown', e => onSortKeyDown(e, id, pass));
+
+    wrap.appendChild(card);
+    listEl.appendChild(wrap);
+  });
+}
+
+let pendingDrag = null;
+const DRAG_MOVE_THRESHOLD = 4; // px before committing to drag
+
+function onSortPointerDown(e, pass) {
+  const card = e.currentTarget;
+
+  pendingDrag = {
+    card,
+    pass,
+    startY: e.clientY,
+    cardOffsetY: e.clientY - card.getBoundingClientRect().top,
+    pointerId: e.pointerId,
+    committed: false,
+  };
+
+  document.addEventListener('pointermove', onSortPointerMovePending);
+  document.addEventListener('pointerup', onSortPointerUpPending);
+  document.addEventListener('pointercancel', onSortPointerUpPending);
+}
+
+function onSortPointerMovePending(e) {
+  if (!pendingDrag) return;
+  const dy = Math.abs(e.clientY - pendingDrag.startY);
+
+  if (dy >= DRAG_MOVE_THRESHOLD && !pendingDrag.committed) {
+    pendingDrag.committed = true;
+    // Now actually start the drag
+    commitDragStart(pendingDrag, e);
+  }
+
+  if (pendingDrag.committed) {
+    onSortPointerMove(e);
+  }
+}
+
+function onSortPointerUpPending(e) {
+  if (pendingDrag && pendingDrag.committed) {
+    onSortPointerUp(e);
+  }
+  pendingDrag = null;
+  document.removeEventListener('pointermove', onSortPointerMovePending);
+  document.removeEventListener('pointerup', onSortPointerUpPending);
+  document.removeEventListener('pointercancel', onSortPointerUpPending);
+}
+
+function commitDragStart(pending, moveEvent) {
+  const { card, pass, startY, cardOffsetY, pointerId } = pending;
+  const listId = pass === 'urgency' ? 'sort-list-urgency' : 'sort-list-importance';
+  const listEl = document.getElementById(listId);
+  const cardRect = card.getBoundingClientRect();
+  const allCards = Array.from(listEl.querySelectorAll('.sort-card'));
+  const dragIdx = allCards.indexOf(card);
+
+  // Capture initial rects for all cards (FLIP: First)
+  const initialRects = new Map();
+  allCards.forEach(c => {
+    initialRects.set(c, c.getBoundingClientRect());
+  });
+
+  dragState = {
+    card,
+    pass,
+    listId,
+    pointerId,
+    startY,
+    cardOffsetY,
+    originalIndex: dragIdx,
+    currentIndex: dragIdx,
+    initialRects,
+    cardHeight: cardRect.height,
+    gap: 6, // matches CSS gap
+  };
+
+  // Create a placeholder to hold the card's space in flow
+  const placeholder = document.createElement('div');
+  placeholder.style.height = cardRect.height + 'px';
+  placeholder.style.flexShrink = '0';
+  placeholder.className = 'sort-placeholder';
+  // Insert placeholder at the list level (before the wrap container if present)
+  const insertTarget = card.closest('.sort-card-wrap') || card;
+  insertTarget.parentNode.insertBefore(placeholder, insertTarget);
+  dragState.placeholder = placeholder;
+
+  // Position card as dragging (fixed overlay)
+  card.classList.add('dragging');
+  card.style.position = 'fixed';
+  card.style.width = cardRect.width + 'px';
+  card.style.left = cardRect.left + 'px';
+  card.style.top = cardRect.top + 'px';
+  card.style.zIndex = '1000';
+  card.style.pointerEvents = 'none';
+
+  // Set transitions on wrap containers for smooth displacement
+  const allWraps = Array.from(listEl.querySelectorAll('.sort-card-wrap'));
+  const dragWrap = card.closest('.sort-card-wrap');
+  allWraps.forEach(w => {
+    if (w === dragWrap) return;
+    w.style.transition = 'transform 200ms cubic-bezier(0.4, 0, 0.2, 1)';
+  });
+}
+
+function onSortPointerMove(e) {
+  if (!dragState) return;
+  const { card, cardOffsetY, listId, originalIndex, cardHeight, gap } = dragState;
+  const newTop = e.clientY - cardOffsetY;
+  card.style.top = newTop + 'px';
+
+  // Calculate which index the dragged card would occupy
+  const listEl = document.getElementById(listId);
+  const dragWrap = card.closest('.sort-card-wrap');
+  const siblingWraps = Array.from(listEl.querySelectorAll('.sort-card-wrap')).filter(w => w !== dragWrap);
+  let targetIndex = siblingWraps.length;
+
+  for (let i = 0; i < siblingWraps.length; i++) {
+    const rect = siblingWraps[i].getBoundingClientRect();
+    const midpoint = rect.top + rect.height / 2;
+    if (e.clientY < midpoint) {
+      targetIndex = i;
+      break;
+    }
+  }
+
+  dragState.currentIndex = targetIndex >= originalIndex ? targetIndex + 1 : targetIndex;
+
+  // Apply translateY to wrap containers (not inner cards — wraps are visible, cards would clip)
+  siblingWraps.forEach((w, sibIdx) => {
+    const fullIdx = sibIdx >= originalIndex ? sibIdx + 1 : sibIdx;
+    let shift = 0;
+
+    if (dragState.currentIndex <= originalIndex) {
+      if (fullIdx >= dragState.currentIndex && fullIdx < originalIndex) {
+        shift = cardHeight + gap;
+      }
+    } else {
+      if (fullIdx > originalIndex && fullIdx < dragState.currentIndex) {
+        shift = -(cardHeight + gap);
+      }
+    }
+
+    w.style.transform = shift !== 0 ? `translateY(${shift}px)` : '';
+  });
+}
+
+function onSortPointerUp(e) {
+  if (!dragState) return;
+  const { card, pass, listId, originalIndex, currentIndex } = dragState;
+
+  // Remove placeholder
+  if (dragState.placeholder && dragState.placeholder.parentNode) {
+    dragState.placeholder.parentNode.removeChild(dragState.placeholder);
+  }
+
+  // Clean up dragged card styles
+  card.classList.remove('dragging');
+  card.style.position = '';
+  card.style.width = '';
+  card.style.left = '';
+  card.style.top = '';
+  card.style.zIndex = '';
+  card.style.pointerEvents = '';
+
+  const listEl = document.getElementById(listId);
+
+  // Clear transforms on all wraps and cards
+  const allWraps = Array.from(listEl.querySelectorAll('.sort-card-wrap'));
+  allWraps.forEach(w => {
+    w.style.transform = '';
+    w.style.transition = '';
+  });
+  const allCards = Array.from(listEl.querySelectorAll('.sort-card'));
+  allCards.forEach(c => {
+    c.style.transform = '';
+    c.style.transition = '';
+  });
+
+  // Perform DOM reorder
+  const order = pass === 'urgency' ? state.urgencyOrder : state.importanceOrder;
+  const finalIdx = Math.max(0, Math.min(order.length - 1, currentIndex > originalIndex ? currentIndex - 1 : currentIndex));
+
+  if (finalIdx !== originalIndex) {
+    const [moved] = order.splice(originalIndex, 1);
+    order.splice(finalIdx, 0, moved);
+    if (pass === 'urgency') state.urgencyOrder = order;
+    else state.importanceOrder = order;
+  }
+
+  // Re-render with FLIP animation
+  const oldRects = new Map();
+  allCards.forEach(c => {
+    oldRects.set(c.dataset.id, c.getBoundingClientRect());
+  });
+
+  renderSortList(pass);
+
+  // FLIP: animate from old positions to new
+  if (!prefersReducedMotion()) {
+    const newCards = Array.from(listEl.querySelectorAll('.sort-card'));
+    newCards.forEach(c => {
+      const oldRect = oldRects.get(c.dataset.id);
+      if (!oldRect) return;
+      const newRect = c.getBoundingClientRect();
+      const dx = oldRect.left - newRect.left;
+      const dy = oldRect.top - newRect.top;
+      if (Math.abs(dy) > 1 || Math.abs(dx) > 1) {
+        c.style.transform = `translate(${dx}px, ${dy}px)`;
+        c.offsetHeight; // force reflow
+        c.style.transition = 'transform 200ms cubic-bezier(0.4, 0, 0.2, 1)';
+        c.style.transform = '';
+        c.addEventListener('transitionend', function cleanup() {
+          c.style.transition = '';
+          c.removeEventListener('transitionend', cleanup);
+        });
+      }
+    });
+  }
+
+  dragState = null;
+  saveState();
+}
+
+function onSortKeyDown(e, id, pass) {
+  // Don't handle keys during inline editing
+  if (e.target.classList.contains('sort-edit-input')) return;
+
+  const order = pass === 'urgency' ? state.urgencyOrder : state.importanceOrder;
+  const idx = order.indexOf(id);
+  const listId = pass === 'urgency' ? 'sort-list-urgency' : 'sort-list-importance';
+
+  if (e.key === 'ArrowUp' && idx > 0) {
+    e.preventDefault();
+    order.splice(idx, 1);
+    order.splice(idx - 1, 0, id);
+    if (pass === 'urgency') state.urgencyOrder = order;
+    else state.importanceOrder = order;
+    renderSortList(pass);
+    const cards = document.querySelectorAll(`#${listId} .sort-card`);
+    cards[idx - 1]?.focus();
+    announce(`Moved to position ${idx}`);
+    saveState();
+  } else if (e.key === 'ArrowDown' && idx < order.length - 1) {
+    e.preventDefault();
+    order.splice(idx, 1);
+    order.splice(idx + 1, 0, id);
+    if (pass === 'urgency') state.urgencyOrder = order;
+    else state.importanceOrder = order;
+    renderSortList(pass);
+    const cards = document.querySelectorAll(`#${listId} .sort-card`);
+    cards[idx + 1]?.focus();
+    announce(`Moved to position ${idx + 2}`);
+    saveState();
+  }
+}
+
+
+function initSort() {
+  // Urgency done
+  const btnUrgencyDone = document.getElementById('btn-urgency-done');
+  btnUrgencyDone.addEventListener('click', onUrgencyDone);
+  btnUrgencyDone.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onUrgencyDone(); }
+  });
+
+  // Importance done
+  const btnImportanceDone = document.getElementById('btn-importance-done');
+  btnImportanceDone.addEventListener('click', onImportanceDone);
+  btnImportanceDone.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onImportanceDone(); }
+  });
+
+}
+
+function onUrgencyDone() {
+  // Preserve existing importance order if it has all task IDs (e.g. from sample tasks)
+  const taskIds = new Set(state.tasks.map(t => t.id));
+  const importanceValid = state.importanceOrder.length === state.tasks.length &&
+    state.importanceOrder.every(id => taskIds.has(id));
+  if (!importanceValid) {
+    state.importanceOrder = [...state.urgencyOrder]; // carry over as starting order
+  }
+  renderSortList('importance');
+  showPhase('sort-importance');
+  saveState();
+  announce('Now sorting importance. Drag tasks to order by importance. Most important at the top.');
+}
+
+function onImportanceDone() {
+  triggerScatter();
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Phase 3: SCATTER — Position computation
+// ──────────────────────────────────────────────────────────────────────────────
+
+function computeCanvasPositions(canvasW, canvasH) {
+  const n = state.tasks.length;
+  if (n === 0) return {};
+
+  const EDGE_PAD = 64; // keep cards away from edge labels and canvas border
+  const MIN_GAP = 32;
+
+  const usableW = canvasW - EDGE_PAD * 2;
+  const usableH = canvasH - EDGE_PAD * 2;
+
+  const positions = {};
+
+  state.tasks.forEach(task => {
+    const urgencyRank = state.urgencyOrder.indexOf(task.id);
+    const importanceRank = state.importanceOrder.indexOf(task.id);
+
+    const urgencyNorm = n > 1 ? urgencyRank / (n - 1) : 0.5;
+    const importanceNorm = n > 1 ? importanceRank / (n - 1) : 0.5;
+
+    const x = EDGE_PAD + (1 - urgencyNorm) * usableW;
+    const y = EDGE_PAD + importanceNorm * usableH;
+
+    positions[task.id] = { x, y };
+  });
+
+  return forceNudge(positions, canvasW, canvasH, EDGE_PAD, MIN_GAP);
+}
+
+function forceNudge(positions, canvasW, canvasH, edgePad, minGap) {
+  const CARD_W = 140;
+  const CARD_H = 36;
+  const ITERATIONS = 40;
+
+  const ids = Object.keys(positions);
+  const pos = { ...positions };
+
+  for (let iter = 0; iter < ITERATIONS; iter++) {
+    let anyMoved = false;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const a = pos[ids[i]];
+        const b = pos[ids[j]];
+        const dx = b.x - a.x;
+        const dy = b.y - a.y;
+        const overlapX = CARD_W + minGap - Math.abs(dx);
+        const overlapY = CARD_H + minGap - Math.abs(dy);
+        if (overlapX > 0 && overlapY > 0) {
+          const pushX = overlapX / 2;
+          const pushY = overlapY / 2;
+          if (pushX < pushY) {
+            const dir = dx < 0 ? -1 : 1;
+            a.x -= dir * pushX * 0.5;
+            b.x += dir * pushX * 0.5;
+          } else {
+            const dir = dy < 0 ? -1 : 1;
+            a.y -= dir * pushY * 0.5;
+            b.y += dir * pushY * 0.5;
+          }
+          anyMoved = true;
+        }
+      }
+      pos[ids[i]].x = Math.max(edgePad, Math.min(canvasW - CARD_W - edgePad, pos[ids[i]].x));
+      pos[ids[i]].y = Math.max(edgePad, Math.min(canvasH - CARD_H - edgePad, pos[ids[i]].y));
+    }
+    if (!(iter % 10) && !anyMoved) break;
+  }
+
+  return pos;
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Scatter animation
+// ──────────────────────────────────────────────────────────────────────────────
+
+function triggerScatter() {
+  // Capture sort card positions before transition
+  const sortCards = document.querySelectorAll('#sort-list-importance .sort-card');
+  const sortRects = {};
+  sortCards.forEach(card => {
+    sortRects[card.dataset.id] = card.getBoundingClientRect();
+  });
+
+  const rm = prefersReducedMotion();
+
+  // Show scatter phase
+  showPhase('scatter');
+
+  // Wait for layout
+  requestAnimationFrame(() => {
+    const canvas = document.getElementById('scatter-canvas');
+    const canvasRect = canvas.getBoundingClientRect();
+    const canvasH = canvasRect.height;
+    const canvasW = canvasRect.width;
+
+    state.cardPositions = computeCanvasPositions(canvasW, canvasH);
+    buildCanvasCards(rm);
+
+    saveState();
+
+    requestAnimationFrame(() => {
+      drawQuadrantLines(rm);
+
+      setTimeout(() => {
+        animateCardsFlying(sortRects, rm);
+        setTimeout(() => {
+          announce('Tasks scattered on the map. Click any task to mark it done.');
+        }, rm ? 200 : 1400);
+      }, rm ? 0 : 300);
+    });
+  });
+}
+
+function buildCanvasCards(rm) {
+  const canvas = document.getElementById('scatter-canvas');
+  canvas.querySelectorAll('.canvas-card').forEach(c => c.remove());
+
+  state.tasks.forEach(task => {
+    const pos = state.cardPositions[task.id];
+    if (!pos) return;
+
+    const card = document.createElement('div');
+    card.className = 'canvas-card' + (state.done.has(task.id) ? ' done' : '');
+    card.dataset.id = task.id;
+    card.tabIndex = 0;
+    card.setAttribute('role', 'button');
+    card.setAttribute('aria-pressed', state.done.has(task.id) ? 'true' : 'false');
+    card.setAttribute('aria-label', `${task.text}${state.done.has(task.id) ? ', done' : ''} — click to toggle done`);
+    card.style.left = pos.x + 'px';
+    card.style.top = pos.y + 'px';
+    card.style.opacity = '0';
+
+    // Phase 1.3: SVG with viewBox, width/height attributes
+    card.innerHTML = `
+      <span class="card-text">${escapeHtml(task.text)}</span>
+      <div class="card-strike" aria-hidden="true">
+        <svg width="100%" height="100%" preserveAspectRatio="none" overflow="visible"><path class="strike-path" d=""/></svg>
+      </div>
+    `;
+
+    // Phase 1.3: double-rAF for strike path
+    requestAnimationFrame(() => requestAnimationFrame(() => updateStrikePath(card)));
+
+    setupLongPressDrag(card, task.id);
+    setupSwipeStrike(card, task.id);
+
+    card.addEventListener('pointerdown', () => {
+      document.querySelectorAll('.canvas-card').forEach(c => { c.style.zIndex = '1'; });
+      card.style.zIndex = '10';
+    });
+    card.addEventListener('focus', () => {
+      document.querySelectorAll('.canvas-card').forEach(c => { c.style.zIndex = '1'; });
+      card.style.zIndex = '10';
+    });
+
+    let clickTimer = null;
+    card.addEventListener('click', (e) => {
+      if (card._suppressNextClick) { card._suppressNextClick = false; return; }
+      if (card.querySelector('input')) return;
+      clearTimeout(clickTimer);
+      clickTimer = setTimeout(() => {
+        onCanvasCardTap(card, task.id);
+      }, 250);
+    });
+
+    card.addEventListener('dblclick', (e) => {
+      e.stopPropagation();
+      clearTimeout(clickTimer);
+      card._suppressNextClick = true;
+      setTimeout(() => { card._suppressNextClick = false; }, 300);
+
+      const textEl = card.querySelector('.card-text');
+      if (textEl.getAttribute('contenteditable') === 'true') return;
+      const originalText = textEl.textContent;
+      const taskId = card.dataset.id;
+
+      textEl.setAttribute('contenteditable', 'true');
+      textEl.style.outline = 'none';
+      // Prevent iOS zoom by temporarily setting font to 16px
+      textEl.style.fontSize = '16px';
+      textEl.focus();
+
+      // Place cursor at end
+      const range = document.createRange();
+      range.selectNodeContents(textEl);
+      range.collapse(false);
+      const sel = window.getSelection();
+      sel.removeAllRanges();
+      sel.addRange(range);
+
+      function save() {
+        textEl.setAttribute('contenteditable', 'false');
+        textEl.style.fontSize = '';
+        // Normalize: convert <br> and <div> to \n, then get plain text for state
+        const html = textEl.innerHTML;
+        const plainText = textEl.textContent.trim() || originalText;
+        if (plainText !== originalText) {
+          const t = state.tasks.find(t => t.id === taskId);
+          if (t) t.text = plainText;
+        }
+        // Preserve line breaks in display by keeping innerHTML with <br> tags
+        // Clean up: normalize divs/ps from contenteditable to simple <br>
+        const cleaned = html.replace(/<div>/gi, '<br>').replace(/<\/div>/gi, '').replace(/<p>/gi, '<br>').replace(/<\/p>/gi, '').replace(/^<br>/, '').trim();
+        textEl.innerHTML = cleaned || escapeHtml(originalText);
+        card.setAttribute('aria-label', `${plainText} — click to toggle done`);
+        requestAnimationFrame(() => requestAnimationFrame(() => updateStrikePath(card)));
+      }
+
+      function cancel() {
+        textEl.setAttribute('contenteditable', 'false');
+        textEl.style.fontSize = '';
+        textEl.textContent = originalText;
+      }
+
+      textEl.addEventListener('keydown', function handler(ev) {
+        if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); save(); textEl.removeEventListener('keydown', handler); }
+        if (ev.key === 'Escape') { ev.preventDefault(); cancel(); textEl.removeEventListener('keydown', handler); }
+        ev.stopPropagation();
+      });
+
+      textEl.addEventListener('blur', save, { once: true });
+    });
+
+    // Double-tap fallback for mobile
+    let lastTapTime = 0;
+    card.addEventListener('pointerup', (e) => {
+      if (card._suppressNextClick) return;
+      if (card.querySelector('[contenteditable="true"]') || card.querySelector('.sort-edit-input')) return;
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        card.dispatchEvent(new Event('dblclick', { bubbles: true }));
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+    });
+
+    card.addEventListener('keydown', e => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        onCanvasCardTap(card, task.id);
+      }
+      if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+        e.preventDefault();
+        const STEP = 20;
+        const canvasRect = canvas.getBoundingClientRect();
+        const EDGE = 24;
+        const oldX = parseFloat(card.style.left) || 0;
+        const oldY = parseFloat(card.style.top) || 0;
+        let x = oldX;
+        let y = oldY;
+        if (e.key === 'ArrowLeft')  x = Math.max(EDGE, x - STEP);
+        if (e.key === 'ArrowRight') x = Math.min(canvasRect.width - card.offsetWidth - EDGE, x + STEP);
+        if (e.key === 'ArrowUp')    y = Math.max(EDGE, y - STEP);
+        if (e.key === 'ArrowDown')  y = Math.min(canvasRect.height - card.offsetHeight - EDGE, y + STEP);
+        if (x === oldX && y === oldY) {
+          announce(`${getTaskText(task.id)} at edge`);
+          return;
+        }
+        card.style.left = x + 'px';
+        card.style.top  = y + 'px';
+        state.cardPositions[task.id] = { x, y };
+        announce(`${task.text} moved to ${Math.round(x)}, ${Math.round(y)}`);
+      }
+    });
+
+    canvas.appendChild(card);
+  });
+}
+
+function drawQuadrantLines(rm) {
+  const lines = document.querySelectorAll('.q-line');
+  const canvas = document.getElementById('scatter-canvas');
+  const h = canvas.clientHeight;
+  const w = canvas.clientWidth;
+
+  const halfH = h / 2;
+  const halfW = w / 2;
+
+  // Phase 1.2: Set dasharray, then set dashoffset via inline style
+  document.getElementById('vline-up').style.strokeDasharray = halfH;
+  document.getElementById('vline-up').style.strokeDashoffset = halfH;
+  document.getElementById('vline-down').style.strokeDasharray = halfH;
+  document.getElementById('vline-down').style.strokeDashoffset = halfH;
+  document.getElementById('hline-left').style.strokeDasharray = halfW;
+  document.getElementById('hline-left').style.strokeDashoffset = halfW;
+  document.getElementById('hline-right').style.strokeDasharray = halfW;
+  document.getElementById('hline-right').style.strokeDashoffset = halfW;
+
+  requestAnimationFrame(() => {
+    // Phase 1.2: Clear inline strokeDashoffset before adding .drawn class
+    // so the CSS class value (0) takes effect via transition
+    lines.forEach(line => {
+      line.style.strokeDashoffset = '';
+      line.classList.add('drawn');
+    });
+  });
+}
+
+function animateCardsFlying(sortRects, rm) {
+  const canvas = document.getElementById('scatter-canvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  const cards = canvas.querySelectorAll('.canvas-card');
+
+  if (rm) {
+    cards.forEach((card) => {
+      card.style.opacity = '1';
+    });
+    return;
+  }
+
+  cards.forEach((card, i) => {
+    const id = card.dataset.id;
+    const targetPos = state.cardPositions[id];
+    if (!targetPos) return;
+
+    const srcRect = sortRects[id];
+
+    card.style.left = targetPos.x + 'px';
+    card.style.top = targetPos.y + 'px';
+
+    let fromX = 0, fromY = 0;
+    if (srcRect) {
+      fromX = (srcRect.left - canvasRect.left) - targetPos.x;
+      fromY = (srcRect.top - canvasRect.top) - targetPos.y;
+    } else {
+      fromX = 0;
+      fromY = canvasRect.height * 0.15;
+    }
+
+    const midX = fromX * 0.65;
+    const midY = fromY * 0.65 - 12;
+
+    card.animate([
+      { transform: `translate(${fromX}px, ${fromY}px)`, opacity: 0.85 },
+      { transform: `translate(${midX}px, ${midY}px)`,   opacity: 0.9  },
+      { transform: `translate(0px, 0px)`,                opacity: 1    }
+    ], {
+      duration: 420,
+      easing: 'cubic-bezier(0.25, 0.1, 0.15, 1.0)',
+      fill: 'both',
+      delay: i * 30
+    });
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Canvas card interactions
+// ──────────────────────────────────────────────────────────────────────────────
+
+function onCanvasCardTap(card, id) {
+  const isDone = state.done.has(id);
+  const text = getTaskText(id);
+  const strikePath = card.querySelector('.strike-path');
+  if (isDone) {
+    state.done.delete(id);
+    card.classList.remove('done');
+    card.setAttribute('aria-pressed', 'false');
+    card.setAttribute('aria-label', `${text} — click to toggle done`);
+    // Set inline strokeDashoffset to full length (hidden)
+    if (strikePath) {
+      const len = strikePath.getTotalLength?.() || parseFloat(strikePath.style.strokeDasharray) || 100;
+      strikePath.style.strokeDashoffset = len + '';
+    }
+    announce(`${text} — unmarked`);
+  } else {
+    state.done.add(id);
+    card.classList.add('done');
+    card.setAttribute('aria-pressed', 'true');
+    card.setAttribute('aria-label', `${text}, done — click to toggle done`);
+    // Set inline strokeDashoffset to 0 (visible)
+    if (strikePath) {
+      strikePath.style.strokeDashoffset = '0';
+    }
+    announce(`${text} — done`);
+  }
+  saveState();
+}
+
+// Swipe-to-strike removed — tap toggles strikethrough, hold to drag, double-tap to edit
+function setupSwipeStrike(card, id) {}
+
+function getTaskText(id) {
+  return state.tasks.find(t => t.id === id)?.text || '';
+}
+
+// Fix 3: Horizontal strikethrough with 6 variations
+function generateStrikePath(w, h) {
+  const midY = h / 2;
+  // Uneven horizontal jagged line — slight random wobble, spans full width
+  const points = 7;
+  const segW = (w + 4) / (points - 1);
+  let d = `M -2 ${midY + (Math.random() - 0.5) * 2.5}`;
+  for (let i = 1; i < points; i++) {
+    const x = -2 + segW * i;
+    const wobble = (Math.random() - 0.5) * 3;
+    d += ` L ${x} ${midY + wobble}`;
+  }
+  return d;
+}
+
+function updateStrikePath(card) {
+  const strike = card.querySelector('.card-strike');
+  if (!strike) return;
+  const svg = strike.querySelector('svg');
+  const path = strike.querySelector('.strike-path');
+  if (!svg || !path) return;
+
+  const w = strike.offsetWidth;
+  const h = strike.offsetHeight;
+
+  // If dimensions are 0, the card hasn't laid out yet — retry
+  if (!w || w < 2 || !h || h < 2) {
+    setTimeout(() => updateStrikePath(card), 100);
+    return;
+  }
+
+  // Set viewBox for proper scaling
+  svg.setAttribute('viewBox', `0 0 ${w} ${h}`);
+
+  const prevW = parseFloat(card.dataset.strikeW) || 0;
+  const prevH = parseFloat(card.dataset.strikeH) || 0;
+  const prevD = card.dataset.strikeD || '';
+
+  let d;
+  // Reuse existing path if dimensions haven't changed much
+  if (prevD && Math.abs(w - prevW) < 5 && Math.abs(h - prevH) < 5) {
+    d = prevD;
+  } else {
+    d = generateStrikePath(w, h);
+    card.dataset.strikeW = w;
+    card.dataset.strikeH = h;
+    card.dataset.strikeD = d;
+  }
+  path.setAttribute('d', d);
+  path.style.strokeWidth = '1.5';
+
+  // Floor for path length — add extra to prevent residue dot at start
+  const len = Math.max(path.getTotalLength?.() || w * 1.2, 10) + 2;
+  path.style.strokeDasharray = len + '';
+  path.style.strokeDashoffset = card.classList.contains('done') ? '0' : len + '';
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Add task on canvas
+// ──────────────────────────────────────────────────────────────────────────────
+
+function initCanvasAdd() {
+  const addBtn = document.getElementById('canvas-add-btn');
+  const addWrap = document.getElementById('canvas-add-input-wrap');
+  const addInput = document.getElementById('canvas-add-input');
+  if (!addBtn || !addWrap || !addInput) return;
+
+  addBtn.addEventListener('click', () => {
+    const isOpen = addWrap.classList.contains('visible');
+    if (isOpen) {
+      addWrap.classList.remove('visible');
+    } else {
+      addWrap.classList.add('visible');
+      addInput.focus();
+    }
+  });
+
+  addInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      const text = addInput.value.trim();
+      if (text) {
+        addTaskToCanvas(text);
+        addInput.value = '';
+        addWrap.classList.remove('visible');
+      }
+      e.preventDefault();
+    }
+    if (e.key === 'Escape') {
+      addWrap.classList.remove('visible');
+      addBtn.focus();
+    }
+  });
+
+  document.addEventListener('click', (e) => {
+    if (addWrap.classList.contains('visible') &&
+        !addWrap.contains(e.target) && e.target !== addBtn) {
+      addWrap.classList.remove('visible');
+    }
+  });
+}
+
+function addTaskToCanvas(text) {
+  const task = { id: makeId(), text };
+  state.tasks.push(task);
+
+  const canvas = document.getElementById('scatter-canvas');
+  const canvasRect = canvas.getBoundingClientRect();
+  const x = canvasRect.width / 2 - 60;
+  const y = canvasRect.height / 2 - 18;
+  state.cardPositions[task.id] = { x, y };
+
+  state.urgencyOrder.push(task.id);
+  state.importanceOrder.push(task.id);
+
+  const card = document.createElement('div');
+  card.className = 'canvas-card';
+  card.dataset.id = task.id;
+  card.tabIndex = 0;
+  card.setAttribute('role', 'button');
+  card.setAttribute('aria-pressed', 'false');
+  card.setAttribute('aria-label', `${task.text} — click to toggle done`);
+  card.style.left = x + 'px';
+  card.style.top = y + 'px';
+  card.style.opacity = '0';
+
+  card.innerHTML = `
+    <span class="card-text">${escapeHtml(task.text)}</span>
+    <div class="card-strike" aria-hidden="true">
+      <svg width="100%" height="100%" preserveAspectRatio="none" overflow="visible"><path class="strike-path" d=""/></svg>
+    </div>
+  `;
+
+  setupLongPressDrag(card, task.id);
+  setupSwipeStrike(card, task.id);
+
+  card.addEventListener('pointerdown', () => {
+    document.querySelectorAll('.canvas-card').forEach(c => { c.style.zIndex = '1'; });
+    card.style.zIndex = '10';
+  });
+  card.addEventListener('focus', () => {
+    document.querySelectorAll('.canvas-card').forEach(c => { c.style.zIndex = '1'; });
+    card.style.zIndex = '10';
+  });
+
+  let clickTimer = null;
+  card.addEventListener('click', (e) => {
+    if (card._suppressNextClick) { card._suppressNextClick = false; return; }
+    if (card.querySelector('input')) return;
+    clearTimeout(clickTimer);
+    clickTimer = setTimeout(() => {
+      onCanvasCardTap(card, task.id);
+    }, 250);
+  });
+
+  card.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    clearTimeout(clickTimer);
+    card._suppressNextClick = true;
+    setTimeout(() => { card._suppressNextClick = false; }, 300);
+
+    const textEl = card.querySelector('.card-text');
+    if (textEl.getAttribute('contenteditable') === 'true') return;
+    const originalText = textEl.textContent;
+    const taskId = card.dataset.id;
+
+    textEl.setAttribute('contenteditable', 'true');
+    textEl.style.outline = 'none';
+    textEl.style.fontSize = '16px';
+    textEl.focus();
+
+    const range = document.createRange();
+    range.selectNodeContents(textEl);
+    range.collapse(false);
+    const sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(range);
+
+    function save() {
+      textEl.setAttribute('contenteditable', 'false');
+      textEl.style.fontSize = '';
+      const html = textEl.innerHTML;
+      const plainText = textEl.textContent.trim() || originalText;
+      if (plainText !== originalText) {
+        const t = state.tasks.find(t => t.id === taskId);
+        if (t) t.text = plainText;
+      }
+      const cleaned = html.replace(/<div>/gi, '<br>').replace(/<\/div>/gi, '').replace(/<p>/gi, '<br>').replace(/<\/p>/gi, '').replace(/^<br>/, '').trim();
+      textEl.innerHTML = cleaned || escapeHtml(originalText);
+      card.setAttribute('aria-label', `${plainText} — click to toggle done`);
+      requestAnimationFrame(() => requestAnimationFrame(() => updateStrikePath(card)));
+    }
+
+    function cancel() {
+      textEl.setAttribute('contenteditable', 'false');
+      textEl.style.fontSize = '';
+      textEl.textContent = originalText;
+    }
+
+    textEl.addEventListener('keydown', function handler(ev) {
+      if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); save(); textEl.removeEventListener('keydown', handler); }
+      if (ev.key === 'Escape') { ev.preventDefault(); cancel(); textEl.removeEventListener('keydown', handler); }
+      ev.stopPropagation();
+    });
+
+    textEl.addEventListener('blur', save, { once: true });
+  });
+
+  // Double-tap fallback for mobile
+  let lastTapTime = 0;
+  card.addEventListener('pointerup', (e) => {
+    if (card.querySelector('[contenteditable="true"]') || card.querySelector('.sort-edit-input')) return;
+    const now = Date.now();
+    if (now - lastTapTime < 300) {
+      card.dispatchEvent(new Event('dblclick', { bubbles: true }));
+      lastTapTime = 0;
+    } else {
+      lastTapTime = now;
+    }
+  });
+
+  card.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') {
+      e.preventDefault();
+      onCanvasCardTap(card, task.id);
+    }
+    if (['ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].includes(e.key)) {
+      e.preventDefault();
+      const STEP = 20;
+      const canvasRect2 = canvas.getBoundingClientRect();
+      const EDGE = 24;
+      const oldCx = parseFloat(card.style.left) || 0;
+      const oldCy = parseFloat(card.style.top) || 0;
+      let cx = oldCx;
+      let cy = oldCy;
+      if (e.key === 'ArrowLeft')  cx = Math.max(EDGE, cx - STEP);
+      if (e.key === 'ArrowRight') cx = Math.min(canvasRect2.width - card.offsetWidth - EDGE, cx + STEP);
+      if (e.key === 'ArrowUp')    cy = Math.max(EDGE, cy - STEP);
+      if (e.key === 'ArrowDown')  cy = Math.min(canvasRect2.height - card.offsetHeight - EDGE, cy + STEP);
+      if (cx === oldCx && cy === oldCy) {
+        announce(`${getTaskText(task.id)} at edge`);
+        return;
+      }
+      card.style.left = cx + 'px';
+      card.style.top  = cy + 'px';
+      state.cardPositions[task.id] = { x: cx, y: cy };
+      announce(`${task.text} moved to ${Math.round(cx)}, ${Math.round(cy)}`);
+    }
+  });
+
+  canvas.appendChild(card);
+
+  requestAnimationFrame(() => requestAnimationFrame(() => {
+    updateStrikePath(card);
+    card.animate([
+      { opacity: 0, transform: 'scale(0.9)' },
+      { opacity: 1, transform: 'scale(1)' }
+    ], { duration: 200, easing: 'ease-out', fill: 'forwards' });
+  }));
+
+  saveState();
+  announce(`Added ${task.text} to the map.`);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Long-press drag on canvas
+// ──────────────────────────────────────────────────────────────────────────────
+
+function setupLongPressDrag(card, id) {
+  let pressTimer = null;
+  let isDragging = false;
+  let startX, startY, startLeft, startTop;
+  let pointerId = null;
+  let moved = false;
+
+  const LONG_PRESS_MS = 200;
+  const MOVEMENT_TOLERANCE = 14;
+  const SNAP_THRESHOLD = 20;
+
+  function onStart(e) {
+    if (card.querySelector('input')) return;
+    if (e.button !== undefined && e.button !== 0) return;
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+
+    startX = clientX;
+    startY = clientY;
+    startLeft = parseFloat(card.style.left) || 0;
+    startTop = parseFloat(card.style.top) || 0;
+    moved = false;
+    isDragging = false;
+
+    if (e.pointerId !== undefined) pointerId = e.pointerId;
+
+    pressTimer = setTimeout(() => {
+      if (!moved) {
+        isDragging = true;
+        canvasDragActive = true;
+        card._suppressNextClick = true;
+        card.classList.add('grabbing');
+
+        if (e.pointerId !== undefined) card.setPointerCapture(e.pointerId);
+
+        const rm = prefersReducedMotion();
+        if (!rm) {
+          card.style.transition = 'box-shadow 180ms ease-out';
+        }
+        card.style.boxShadow = 'var(--card-shadow-lift)';
+        card.style.zIndex = '100';
+
+      }
+    }, LONG_PRESS_MS);
+  }
+
+  function onMove(e) {
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    if (dist > MOVEMENT_TOLERANCE && !isDragging) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+      moved = true;
+      card._suppressNextClick = true;
+    }
+
+    if (!isDragging) return;
+    e.preventDefault();
+
+    const canvas = document.getElementById('scatter-canvas');
+    const canvasRect = canvas.getBoundingClientRect();
+
+    let newLeft = startLeft + dx;
+    let newTop = startTop + dy;
+
+    const EDGE = 24;
+    newLeft = Math.max(EDGE, Math.min(canvasRect.width - card.offsetWidth - EDGE, newLeft));
+    newTop = Math.max(EDGE, Math.min(canvasRect.height - card.offsetHeight - EDGE, newTop));
+
+    card.style.left = newLeft + 'px';
+    card.style.top = newTop + 'px';
+  }
+
+  function onEnd(e) {
+    clearTimeout(pressTimer);
+    pressTimer = null;
+
+    if (!isDragging) return;
+
+    const clientX = e.touches ? (e.changedTouches[0]?.clientX ?? startX) : e.clientX;
+    const clientY = e.touches ? (e.changedTouches[0]?.clientY ?? startY) : e.clientY;
+    const dx = clientX - startX;
+    const dy = clientY - startY;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+
+    isDragging = false;
+    canvasDragActive = false;
+    card.classList.remove('grabbing');
+    card.style.zIndex = '';
+
+    const rm = prefersReducedMotion();
+
+    card._suppressNextClick = true;
+    setTimeout(() => { card._suppressNextClick = false; }, 300);
+
+    if (dist < SNAP_THRESHOLD) {
+      const snapDur = rm ? 0 : 180;
+      card.style.transition = `left ${snapDur}ms ease-out, top ${snapDur}ms ease-out, box-shadow ${snapDur}ms ease`;
+      card.style.left = startLeft + 'px';
+      card.style.top = startTop + 'px';
+      card.style.boxShadow = '';
+      setTimeout(() => { card.style.transition = ''; }, snapDur + 10);
+    } else {
+      card.style.boxShadow = '';
+      card.style.transition = 'box-shadow 150ms ease';
+      state.cardPositions[id] = {
+        x: parseFloat(card.style.left),
+        y: parseFloat(card.style.top),
+      };
+      saveState();
+      setTimeout(() => { card.style.transition = ''; }, 160);
+    }
+  }
+
+  card.addEventListener('pointerdown', onStart);
+  card.addEventListener('pointermove', onMove);
+  card.addEventListener('pointerup', onEnd);
+  card.addEventListener('pointercancel', onEnd);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// localStorage persistence
+// ──────────────────────────────────────────────────────────────────────────────
+
+const LS_KEY = 'eisenhower-matrix-state';
+try { localStorage.removeItem(LS_KEY); } catch(e) {}
+
+// Persistence disabled — backend will replace this later
+function saveState() {}
+function loadSavedState() { return false; }
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Start fresh
+// ──────────────────────────────────────────────────────────────────────────────
+
+function doStartFresh() {
+  state.tasks = [];
+  state.urgencyOrder = [];
+  state.importanceOrder = [];
+  state.cardPositions = {};
+  state.done = new Set();
+  idCounter = 0;
+
+  // Clear canvas
+  document.getElementById('scatter-canvas').querySelectorAll('.canvas-card').forEach(c => c.remove());
+  // Reset lines
+  document.querySelectorAll('.q-line').forEach(l => {
+    l.classList.remove('drawn');
+    l.style.strokeDashoffset = l.style.strokeDasharray;
+  });
+
+  try { localStorage.removeItem(LS_KEY); } catch(e) {}
+
+  // Re-init dump
+  document.getElementById('dump-cards').innerHTML = '';
+  document.getElementById('dump-input').value = '';
+  document.getElementById('phase-dump').classList.remove('has-tasks');
+  const suggestBtn = document.getElementById('btn-suggest-tasks');
+  if (suggestBtn) { suggestBtn.style.opacity = ''; suggestBtn.style.pointerEvents = ''; }
+
+  updateSortButton();
+  showPhase('dump');
+  document.getElementById('dump-input').focus();
+  announce('Starting fresh. Add your tasks.');
+}
+
+function initStartFresh() {
+  const btn = document.getElementById('btn-start-fresh');
+  let confirmTimer = null;
+
+  function resetConfirmState() {
+    btn.textContent = 'start fresh';
+    btn.classList.remove('confirming');
+    btn.setAttribute('aria-label', 'Start fresh — tap again to confirm');
+    clearTimeout(confirmTimer);
+    confirmTimer = null;
+  }
+
+  btn.addEventListener('click', () => {
+    if (btn.classList.contains('confirming')) {
+      resetConfirmState();
+      doStartFresh();
+    } else {
+      btn.textContent = 'tap again to confirm';
+      btn.classList.add('confirming');
+      btn.setAttribute('aria-label', 'Tap again to confirm start fresh');
+      announce('Tap again to confirm. This will clear all tasks.');
+      confirmTimer = setTimeout(() => {
+        resetConfirmState();
+      }, 3000);
+    }
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Fix 1: Sort tips system
+// ──────────────────────────────────────────────────────────────────────────────
+
+const URGENCY_TIPS = [
+  "Go with your gut. The first instinct is almost always right.",
+  "If two feel similar, place the one making more noise in your head higher.",
+  "Urgency has a clock \u2014 if I ignore this for a week, does something go wrong?",
+  "A rough ranking is enough. You can adjust on the map later.",
+  "Sort quickly. A rough map seen fast is more useful than a perfect map seen never."
+];
+
+const IMPORTANCE_TIPS = [
+  "Importance has weight \u2014 does this connect to something you genuinely care about?",
+  "The task that keeps surfacing in your mind, unprompted, is asking to be ranked higher.",
+  "Important work is rarely urgent. Urgent work is rarely important.",
+  "Ask yourself: does completing this move something meaningful forward?",
+  "Notice if everything feels important. That feeling is worth sitting with."
+];
+
+let urgencyTipIdx = 0;
+let importanceTipIdx = 0;
+let urgencyTipTimer = null;
+let importanceTipTimer = null;
+
+function rotateTip(textEl, tips, idxKey, timerKey) {
+  // Slide out current
+  textEl.style.animation = 'tipSlideOut 300ms ease forwards';
+  setTimeout(() => {
+    // Update text and slide in
+    if (idxKey === 'urgency') {
+      urgencyTipIdx = (urgencyTipIdx + 1) % tips.length;
+      textEl.textContent = tips[urgencyTipIdx];
+    } else {
+      importanceTipIdx = (importanceTipIdx + 1) % tips.length;
+      textEl.textContent = tips[importanceTipIdx];
+    }
+    textEl.style.animation = '';
+    // Force reflow to restart animation
+    textEl.offsetHeight;
+    textEl.style.animation = 'tipSlideUp 600ms ease forwards';
+
+    // Schedule next rotation
+    const timer = setTimeout(() => rotateTip(textEl, tips, idxKey, timerKey), 6000);
+    if (idxKey === 'urgency') urgencyTipTimer = timer;
+    else importanceTipTimer = timer;
+  }, 300);
+}
+
+function startTipRotation(containerId, tips, idxKey) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const textEl = container.querySelector('.sort-tip-text');
+  if (!textEl) return;
+
+  // Show first tip
+  const idx = idxKey === 'urgency' ? urgencyTipIdx : importanceTipIdx;
+  textEl.textContent = tips[idx];
+  textEl.style.animation = 'tipSlideUp 600ms ease forwards';
+
+  // Start rotation after 5 seconds
+  const timer = setTimeout(() => rotateTip(textEl, tips, idxKey), 5000);
+  if (idxKey === 'urgency') urgencyTipTimer = timer;
+  else importanceTipTimer = timer;
+}
+
+function stopTipRotation() {
+  clearTimeout(urgencyTipTimer);
+  clearTimeout(importanceTipTimer);
+  urgencyTipTimer = null;
+  importanceTipTimer = null;
+}
+
+function initSortTips() {
+  startTipRotation('sort-tip-urgency', URGENCY_TIPS, 'urgency');
+  startTipRotation('sort-tip-importance', IMPORTANCE_TIPS, 'importance');
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Corner label popovers
+// ──────────────────────────────────────────────────────────────────────────────
+
+function initCornerPopovers() {
+  const labels = document.querySelectorAll('.corner-label');
+  const popovers = document.querySelectorAll('.corner-popover');
+
+  labels.forEach(label => {
+    label.addEventListener('click', (e) => {
+      e.stopPropagation();
+      // Find the matching popover (next sibling)
+      const popover = label.nextElementSibling;
+      if (!popover || !popover.classList.contains('corner-popover')) return;
+      const isOpen = popover.classList.contains('open');
+      // Close all popovers first
+      popovers.forEach(p => p.classList.remove('open'));
+      // Toggle the clicked one
+      if (!isOpen) popover.classList.add('open');
+    });
+  });
+
+  // Click outside dismisses all popovers
+  document.addEventListener('click', () => {
+    popovers.forEach(p => p.classList.remove('open'));
+  });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Fix 1: Map guide
+// ──────────────────────────────────────────────────────────────────────────────
+
+function initMapGuide() {
+  const toggle = document.getElementById('map-guide-toggle');
+  const content = document.getElementById('map-guide-content');
+  const close = document.getElementById('map-guide-close');
+  if (!toggle || !content) return;
+
+  toggle.addEventListener('click', () => {
+    content.classList.toggle('open');
+    toggle.setAttribute('aria-expanded', content.classList.contains('open') ? 'true' : 'false');
+  });
+  if (close) {
+    close.addEventListener('click', () => {
+      content.classList.remove('open');
+      toggle.setAttribute('aria-expanded', 'false');
+      toggle.focus();
+    });
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Typewriter animation for dump input
+// ──────────────────────────────────────────────────────────────────────────────
+
+const TYPEWRITER_TEXTS = [
+  "finish the quarterly report",
+  "call back Dr. Chen",
+  "start exercising regularly",
+  "reply to the group chat",
+  "research school options",
+];
+
+let typewriterTimeouts = [];
+let typewriterIdx = 0;
+let typewriterRunning = false;
+
+function stopTypewriter() {
+  typewriterTimeouts.forEach(id => clearTimeout(id));
+  typewriterTimeouts = [];
+  typewriterRunning = false;
+  const wrap = document.querySelector('.dump-input-wrap');
+  if (wrap) wrap.classList.remove('typewriter-active');
+}
+
+function startTypewriter() {
+  if (typewriterRunning) return;
+  const el = document.getElementById('typewriter');
+  const wrap = document.querySelector('.dump-input-wrap');
+  if (!el) return;
+  el.textContent = '';
+  typewriterRunning = true;
+  if (wrap) wrap.classList.add('typewriter-active');
+  cycleTypewriter();
+}
+
+function cycleTypewriter() {
+  if (!typewriterRunning) return;
+  const el = document.getElementById('typewriter');
+  if (!el) return;
+  const text = TYPEWRITER_TEXTS[typewriterIdx % TYPEWRITER_TEXTS.length];
+  typeText(text, () => {
+    if (!typewriterRunning) return;
+    deleteText(() => {
+      if (!typewriterRunning) return;
+      typewriterIdx++;
+      cycleTypewriter();
+    });
+  });
+}
+
+function typeText(text, callback) {
+  const el = document.getElementById('typewriter');
+  if (!el) return;
+  let i = 0;
+  el.textContent = '';
+  function step() {
+    if (!typewriterRunning) return;
+    el.textContent = text.slice(0, i + 1);
+    i++;
+    if (i >= text.length) {
+      const tid = setTimeout(callback, 2000);
+      typewriterTimeouts.push(tid);
+    } else {
+      const tid = setTimeout(step, 60);
+      typewriterTimeouts.push(tid);
+    }
+  }
+  step();
+}
+
+function deleteText(callback) {
+  const el = document.getElementById('typewriter');
+  if (!el) return;
+  let i = el.textContent.length;
+  function step() {
+    if (!typewriterRunning) return;
+    i--;
+    el.textContent = el.textContent.slice(0, i);
+    if (i <= 0) {
+      const tid = setTimeout(callback, 500);
+      typewriterTimeouts.push(tid);
+    } else {
+      const tid = setTimeout(step, 30);
+      typewriterTimeouts.push(tid);
+    }
+  }
+  step();
+}
+
+function initTypewriter() {
+  const el = document.getElementById('typewriter');
+  const input = document.getElementById('dump-input');
+  if (!el || !input) return;
+
+  // Click typewriter to focus input
+  el.addEventListener('click', () => {
+    input.focus();
+  });
+
+  // Only start if input is not focused, empty, and no tasks exist
+  if (document.activeElement !== input && !input.value && state.tasks.length === 0) {
+    startTypewriter();
+  }
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Dump cards overflow fade
+// ──────────────────────────────────────────────────────────────────────────────
+
+function updateDumpOverflow() {
+  const cards = document.getElementById('dump-cards');
+  if (!cards) return;
+  cards.classList.toggle('has-overflow', cards.scrollHeight > cards.clientHeight + 10);
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Fullpage snap/slide navigation
+// ──────────────────────────────────────────────────────────────────────────────
+
+let overscrollAccumulator = 0;
+let bouncingBack = false;
+let isTransitioning = false;
+const OVERSCROLL_THRESHOLD = 120;
+const MAX_VISUAL_PULL = 250;
+
+function updateOverscrollVisual(activePhase, direction, noIndicator) {
+  // Rubber band: 1:1 movement up to ~60% of max, then decelerating
+  const raw = overscrollAccumulator;
+  const visualOffset = Math.min(raw * (1 - raw / (2 * MAX_VISUAL_PULL * 2)), MAX_VISUAL_PULL);
+
+  // No transition during active pull — instant response
+  activePhase.style.transition = 'none';
+  if (direction === 'down') {
+    activePhase.style.transform = `translateY(${-visualOffset}px)`;
+  } else {
+    activePhase.style.transform = `translateY(${visualOffset}px)`;
+  }
+
+  // No button animation on first/last page — just the rubber band feel
+  if (noIndicator) return;
+
+  // Find the nav button in the active phase
+  const navBtn = activePhase.querySelector('.phase-nav-btn');
+  if (navBtn) {
+    const progress = overscrollAccumulator / OVERSCROLL_THRESHOLD;
+    if (direction === 'down' && progress > 0.2) {
+      // Button scales up and brightens as you pull
+      const scale = 1 + Math.min(progress, 1) * 0.15; // max 1.15x
+      const opacity = 0.7 + Math.min(progress, 1) * 0.3; // 0.7 → 1.0
+      navBtn.style.transition = 'none';
+      navBtn.style.transform = `translateX(-50%) scale(${scale})`;
+      navBtn.style.opacity = opacity;
+      // Arrow bounces down slightly
+      const arrow = navBtn.querySelector('.nav-arrow');
+      if (arrow) {
+        arrow.style.transition = 'none';
+        arrow.style.transform = `translateY(${Math.min(progress, 1) * 6}px)`;
+      }
+      // At commit point, change color
+      if (progress >= 1) {
+        navBtn.style.color = 'var(--sage)';
+      } else {
+        navBtn.style.color = '';
+      }
+    }
+  }
+}
+
+function resetOverscroll(activePhase) {
+  if (overscrollAccumulator > 0) {
+    bouncingBack = true;
+    activePhase.style.transition = 'transform 180ms cubic-bezier(0.2, 0.9, 0.3, 1.05)';
+    activePhase.style.transform = 'translateY(0)';
+    setTimeout(() => {
+      activePhase.style.transition = '';
+      activePhase.style.transform = '';
+    }, 190);
+    // Block all scroll events for 800ms to absorb trackpad inertia
+    setTimeout(() => {
+      bouncingBack = false;
+    }, 800);
+  }
+  overscrollAccumulator = 0;
+  // Reset nav button styles
+  const navBtn = activePhase.querySelector('.phase-nav-btn');
+  if (navBtn) {
+    navBtn.style.transition = 'transform 200ms ease, opacity 200ms ease, color 200ms ease';
+    navBtn.style.transform = 'translateX(-50%)';
+    navBtn.style.opacity = '';
+    navBtn.style.color = '';
+    const arrow = navBtn.querySelector('.nav-arrow');
+    if (arrow) {
+      arrow.style.transition = 'transform 200ms ease';
+      arrow.style.transform = '';
+    }
+  }
+}
+
+function resetOverscrollTransform(activePhase) {
+  activePhase.style.transform = '';
+  // Reset nav button styles
+  const navBtn = activePhase.querySelector('.phase-nav-btn');
+  if (navBtn) {
+    navBtn.style.transition = 'transform 200ms ease, opacity 200ms ease, color 200ms ease';
+    navBtn.style.transform = 'translateX(-50%)';
+    navBtn.style.opacity = '';
+    navBtn.style.color = '';
+    const arrow = navBtn.querySelector('.nav-arrow');
+    if (arrow) {
+      arrow.style.transition = 'transform 200ms ease';
+      arrow.style.transform = '';
+    }
+  }
+}
+
+function hideOverscrollIndicator() {
+  // no-op — overscroll indicator removed
+}
+
+function goToNextPhase() {
+  const currentPhase = state.phase;
+  // Gate: check if current phase is ready to advance
+  if (currentPhase === 'dump' && state.tasks.length === 0) return;
+  if (currentPhase === 'scatter') return; // last phase
+
+  isTransitioning = true;
+
+  if (currentPhase === 'dump') transitionToSortUrgency();
+  else if (currentPhase === 'sort-urgency') onUrgencyDone();
+  else if (currentPhase === 'sort-importance') onImportanceDone();
+
+  setTimeout(() => { isTransitioning = false; }, 450);
+}
+
+function goToPrevPhase() {
+  const currentPhase = state.phase;
+  if (currentPhase === 'dump') return; // first phase
+
+  isTransitioning = true;
+
+  if (currentPhase === 'sort-urgency') {
+    showPhase('dump');
+    renderDumpCards();
+    updateSortButton();
+  } else if (currentPhase === 'sort-importance') {
+    renderSortList('urgency');
+    showPhase('sort-urgency');
+  } else if (currentPhase === 'scatter') {
+    renderSortList('importance');
+    showPhase('sort-importance');
+  }
+
+  setTimeout(() => { isTransitioning = false; }, 450);
+}
+
+function initPageScroll() {
+  const container = document.querySelector('.flow-container');
+
+  // ── Wheel overscroll detection ──
+  let wheelIdleTimer = null;
+  let lastWheelDirection = null;
+  // bouncingBack is declared globally alongside resetOverscroll
+
+  container.addEventListener('wheel', (e) => {
+    if (isTransitioning) { e.preventDefault(); return; }
+    if (bouncingBack) { e.preventDefault(); return; }
+    if (dragState || canvasDragActive) { return; }
+
+    const activePhase = document.querySelector('.phase-active');
+    if (!activePhase) return;
+
+    // If cursor is over a scrollable child, never trigger page overscroll
+    const scrollableChild = e.target.closest('.dump-cards, .sort-list');
+    if (scrollableChild) {
+      const hasOverflow = scrollableChild.scrollHeight > scrollableChild.clientHeight + 5;
+      if (hasOverflow) {
+        // Card list needs scrolling — let it scroll, block page overscroll
+        return;
+      }
+      // Card list fits on screen — pass through to page overscroll
+    }
+
+    const isAtBottom = activePhase.scrollTop + activePhase.clientHeight >= activePhase.scrollHeight - 5;
+    const isAtTop = activePhase.scrollTop <= 5;
+
+    if (e.deltaY > 0 && isAtBottom) {
+      e.preventDefault();
+      if (state.phase === 'scatter') {
+        // Last page — no overscroll at all
+        return;
+      } else {
+        overscrollAccumulator = Math.min(overscrollAccumulator + e.deltaY, OVERSCROLL_THRESHOLD * 2);
+        lastWheelDirection = 'down';
+        updateOverscrollVisual(activePhase, 'down');
+      }
+
+      clearTimeout(wheelIdleTimer);
+      if (overscrollAccumulator >= OVERSCROLL_THRESHOLD && state.phase !== 'scatter') {
+        // Past threshold — snap immediately
+        wheelIdleTimer = setTimeout(() => {
+          hideOverscrollIndicator();
+          resetOverscrollTransform(activePhase);
+          overscrollAccumulator = 0;
+          goToNextPhase();
+        }, 16);
+      } else {
+        // Under threshold or last page — bounce back after settling
+        wheelIdleTimer = setTimeout(() => {
+          resetOverscroll(activePhase);
+        }, 1000);
+      }
+
+    } else if (e.deltaY < 0 && isAtTop) {
+      e.preventDefault();
+      if (state.phase === 'dump') {
+        const wasCapped = overscrollAccumulator >= OVERSCROLL_THRESHOLD * 0.4 - 1;
+        overscrollAccumulator = Math.min(overscrollAccumulator + Math.abs(e.deltaY), OVERSCROLL_THRESHOLD * 0.4);
+        updateOverscrollVisual(activePhase, 'up', true);
+        // Only set timer if not already capped — once capped, let existing timer run
+        if (!wasCapped) {
+          clearTimeout(wheelIdleTimer);
+          wheelIdleTimer = setTimeout(() => {
+            resetOverscroll(activePhase);
+          }, 200);
+        }
+      } else {
+        overscrollAccumulator = Math.min(overscrollAccumulator + Math.abs(e.deltaY), OVERSCROLL_THRESHOLD * 2);
+        lastWheelDirection = 'up';
+        updateOverscrollVisual(activePhase, 'up');
+
+        clearTimeout(wheelIdleTimer);
+        if (overscrollAccumulator >= OVERSCROLL_THRESHOLD) {
+          wheelIdleTimer = setTimeout(() => {
+            hideOverscrollIndicator();
+            resetOverscrollTransform(activePhase);
+            overscrollAccumulator = 0;
+            goToPrevPhase();
+          }, 16);
+        } else {
+          wheelIdleTimer = setTimeout(() => {
+            resetOverscroll(activePhase);
+          }, 1000);
+        }
+      }
+
+    } else {
+      clearTimeout(wheelIdleTimer);
+      resetOverscroll(activePhase);
+    }
+  }, { passive: false });
+
+  // Reset accumulator on pointer interaction
+  container.addEventListener('pointerdown', () => {
+    if (!dragState) {
+      overscrollAccumulator = 0;
+      hideOverscrollIndicator();
+    }
+  });
+
+  // ── Touch overscroll detection ──
+  let touchStartY = 0;
+  let touchAccumulator = 0;
+  let touchDirection = null;
+
+  container.addEventListener('touchstart', (e) => {
+    touchStartY = e.touches[0].clientY;
+    touchAccumulator = 0;
+    touchDirection = null;
+  }, { passive: true });
+
+  container.addEventListener('touchmove', (e) => {
+    if (isTransitioning) return;
+    if (dragState || canvasDragActive) return; // don't interfere with sort or canvas drag
+
+    const activePhase = document.querySelector('.phase-active');
+    if (!activePhase) return;
+
+    const deltaY = touchStartY - e.touches[0].clientY; // positive = swiping up (scroll down)
+
+    // On touch: check if a scrollable child (card list) is under the finger
+    // If it has overflow and hasn't reached its edge, let it scroll naturally
+    const scrollableChild = e.target.closest('.dump-cards, .sort-list');
+    if (scrollableChild) {
+      const hasOverflow = scrollableChild.scrollHeight > scrollableChild.clientHeight + 5;
+      if (hasOverflow) {
+        const childAtBottom = scrollableChild.scrollTop + scrollableChild.clientHeight >= scrollableChild.scrollHeight - 5;
+        const childAtTop = scrollableChild.scrollTop <= 5;
+        // Only pass through to page overscroll if child is at its edge
+        if (deltaY > 0 && !childAtBottom) return; // still scrolling down within list
+        if (deltaY < 0 && !childAtTop) return;    // still scrolling up within list
+      }
+    }
+
+    const isAtBottom = activePhase.scrollTop + activePhase.clientHeight >= activePhase.scrollHeight - 5;
+    const isAtTop = activePhase.scrollTop <= 5;
+
+    if (deltaY > 0 && isAtBottom) {
+      e.preventDefault();
+      if (state.phase === 'scatter') {
+        // Last page — no overscroll
+        return;
+      } else {
+        touchAccumulator = deltaY;
+        touchDirection = 'down';
+        overscrollAccumulator = touchAccumulator;
+        updateOverscrollVisual(activePhase, 'down');
+      }
+    } else if (deltaY < 0 && isAtTop) {
+      e.preventDefault();
+      if (state.phase === 'dump') {
+        touchAccumulator = Math.min(Math.abs(deltaY), OVERSCROLL_THRESHOLD * 0.4);
+        overscrollAccumulator = touchAccumulator;
+        updateOverscrollVisual(activePhase, 'up', true);
+      } else {
+        touchAccumulator = Math.abs(deltaY);
+        touchDirection = 'up';
+        overscrollAccumulator = touchAccumulator;
+        updateOverscrollVisual(activePhase, 'up');
+      }
+    } else {
+      touchAccumulator = 0;
+      touchDirection = null;
+      resetOverscroll(activePhase);
+    }
+  }, { passive: false });
+
+  container.addEventListener('touchend', () => {
+    const activePhase = document.querySelector('.phase-active');
+    if (!activePhase) return;
+
+    if (overscrollAccumulator >= OVERSCROLL_THRESHOLD) {
+      hideOverscrollIndicator();
+      resetOverscrollTransform(activePhase);
+      if (touchDirection === 'down') goToNextPhase();
+      else if (touchDirection === 'up') goToPrevPhase();
+    } else {
+      resetOverscroll(activePhase);
+    }
+    touchAccumulator = 0;
+    touchDirection = null;
+    overscrollAccumulator = 0;
+  }, { passive: true });
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// Boot
+// ──────────────────────────────────────────────────────────────────────────────
+
+function init() {
+  initSort();
+  initStartFresh();
+  initCanvasAdd();
+  initDump();
+  initSortTips();
+  initMapGuide();
+  initCornerPopovers();
+  initPageScroll();
+
+  const savedPhase = loadSavedState();
+
+  if (savedPhase && savedPhase !== 'dump') {
+    if (savedPhase === 'scatter') {
+      showPhase('scatter');
+      document.fonts.ready.then(() => {
+        const canvas = document.getElementById('scatter-canvas');
+        const canvasRect = canvas.getBoundingClientRect();
+        if (canvasRect.width > 0) {
+          if (Object.keys(state.cardPositions).length === 0) {
+            state.cardPositions = computeCanvasPositions(canvasRect.width, canvasRect.height);
+          }
+          buildCanvasCards(prefersReducedMotion());
+          canvas.querySelectorAll('.canvas-card').forEach(c => { c.style.opacity = '1'; });
+          drawQuadrantLines(prefersReducedMotion());
+          announce('Restored previous session. Click any task to mark it done.');
+        }
+      });
+    } else if (savedPhase === 'sort-urgency') {
+      renderSortList('urgency');
+      showPhase('sort-urgency');
+      announce('Restored urgency sorting session.');
+    } else if (savedPhase === 'sort-importance') {
+      renderSortList('urgency');
+      renderSortList('importance');
+      showPhase('sort-importance');
+      announce('Restored importance sorting session.');
+    }
+  } else {
+    showPhase('dump');
+    // Don't auto-focus — let the typewriter animation play
+  }
+
+  // Detect virtual keyboard on mobile
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => {
+      const keyboardOpen = window.visualViewport.height < window.innerHeight * 0.75;
+      document.body.classList.toggle('keyboard-open', keyboardOpen);
+    });
+  }
+}
+
+init();
+
+// Ensure typewriter starts on fresh load after everything is initialized
+document.fonts.ready.then(() => {
+  if (state.tasks.length === 0 && state.phase === 'dump') {
+    const wrap = document.querySelector('.dump-input-wrap');
+    if (wrap) wrap.classList.remove('has-value');
+    startTypewriter();
+  }
+});
+</script>
+</body>
+</html>
