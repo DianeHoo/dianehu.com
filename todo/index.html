@@ -734,7 +734,7 @@ html, body {
 /* Corner popovers */
 .corner-popover {
   position: absolute;
-  background: var(--sage-08);
+  background: #edeee7;
   border-radius: 8px;
   padding: 10px 14px;
   font-family: var(--font-body);
@@ -1049,6 +1049,18 @@ html, body {
 .toolbar-btn-add {
   line-height: 0;
 }
+.toolbar-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.toolbar-label {
+  font-size: 11px;
+  color: var(--sage-45);
+  line-height: 1;
+  letter-spacing: 0.01em;
+}
 
 .canvas-add-input-wrap {
   position: absolute;
@@ -1080,9 +1092,7 @@ html, body {
   color: var(--text-muted);
 }
 .canvas-add-input:focus-visible {
-  outline: 2px solid var(--sage);
-  outline-offset: 2px;
-  border-radius: 4px;
+  outline: none;
 }
 
 /* ── Typewriter animation for hero input ── */
@@ -1280,11 +1290,11 @@ button:focus-visible {
 
 /* ── Mobile: narrow screens ── */
 @media (max-width: 480px) {
-  .dump-inner { width: min(600px, 100% - 32px); }
+  .dump-inner { width: min(600px, 100% - 48px); }
   .sort-inner > .sort-progress,
   .sort-inner > .sort-header,
   .sort-inner > .sort-list,
-  .sort-inner > .sort-tip { width: min(520px, 100% - 32px); }
+  .sort-inner > .sort-tip { width: min(520px, 100% - 48px); }
   .sort-header { font-size: 16px !important; }
   .canvas-card { max-width: 160px; }
   .corner-label { font-size: 12px; padding: 8px 10px; }
@@ -1298,6 +1308,7 @@ button:focus-visible {
   .axis-important { top: 6px; }
   .dump-cards { gap: 4px; }
   .sort-list { gap: 4px; }
+  .toolbar-label { display: none; }
 }
 </style>
 </head>
@@ -1342,8 +1353,9 @@ button:focus-visible {
           <button id="btn-suggest-tasks" aria-label="Suggest example tasks">suggest tasks</button>
         </div>
         <div class="map-guide-content" id="map-guide-content">
-          <p>This method gives everything a relative position: compared to the rest of your list, how pressing is this? How meaningful?</p>
-          <p>Start from the top-right corner and work your way down-left. The strikethroughs accumulate — that record is worth keeping.</p>
+          <p>Once everything is out of your head, it's easier to see what's going on.</p>
+          <p>Two quick sorts, one for urgency and one for what matters, spread your tasks across a grid.</p>
+          <p>It's clearer to see what needs attention now, what can wait, and what you can let go of.</p>
           <!-- close button removed — user clicks toggle again to collapse -->
         </div>
       </div>
@@ -1359,9 +1371,9 @@ button:focus-visible {
   ═══════════════════════════════════════ -->
   <section id="phase-sort-urgency" class="phase phase-pending sort-section sort-pass-urgency" aria-label="Sort tasks by urgency" aria-hidden="true">
     <div class="sort-inner" id="urgency-inner">
-      <div class="sort-progress" aria-live="polite">sorting urgency &#8212; 1 of 2</div>
-      <h2 class="sort-header"><span aria-hidden="true" style="opacity:0.4">&#128293;</span> Drag to order by urgency.
-Most urgent at the top.</h2>
+      <div class="sort-progress" aria-live="polite">urgency &#8212; 1 of 2</div>
+      <h2 class="sort-header"><span aria-hidden="true" style="opacity:0.4">&#128293;</span> Drag to rank by urgency.
+Most time-sensitive at the top.</h2>
       <div
         id="sort-list-urgency"
         class="sort-list"
@@ -1383,9 +1395,9 @@ Most urgent at the top.</h2>
   ═══════════════════════════════════════ -->
   <section id="phase-sort-importance" class="phase phase-pending sort-section sort-pass-importance" aria-label="Sort tasks by importance" aria-hidden="true">
     <div class="sort-inner" id="importance-inner">
-      <div class="sort-progress" aria-live="polite">sorting importance &#8212; 2 of 2</div>
-      <h2 class="sort-header"><span aria-hidden="true" style="opacity:0.4">&#127807;</span> Now order by importance.
-Most important at the top.</h2>
+      <div class="sort-progress" aria-live="polite">importance &#8212; 2 of 2</div>
+      <h2 class="sort-header"><span aria-hidden="true" style="opacity:0.4">&#127807;</span> Drag to rank by importance.
+What matters most to you goes at the top.</h2>
       <div
         id="sort-list-importance"
         class="sort-list"
@@ -1448,13 +1460,16 @@ Start by adding what's on your mind.</p>
           <input type="text" class="canvas-add-input" id="canvas-add-input" placeholder="add a task" aria-label="Add a new task to the map" autocomplete="off">
         </div>
         <div class="toolbar-item">
-          <button class="toolbar-btn" id="btn-cleanup" aria-label="Clean up completed tasks" title="Clean up completed tasks">✦</button>
+          <button class="toolbar-btn toolbar-btn-add" id="btn-back-to-top" aria-label="Back to the top" title="Back to the top"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><line x1="10" y1="16" x2="10" y2="4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><polyline points="5,9 10,4 15,9" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" fill="none"/></svg></button>
+          <span class="toolbar-label">back to top</span>
         </div>
         <div class="toolbar-item">
           <button class="toolbar-btn toolbar-btn-add" id="canvas-add-btn" aria-label="Add new tasks" title="Add new tasks"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><line x1="10" y1="3" x2="10" y2="17" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="3" y1="10" x2="17" y2="10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+          <span class="toolbar-label">add</span>
         </div>
         <div class="toolbar-item">
-          <button class="toolbar-btn" id="btn-back-to-top" aria-label="Back to the top" title="Back to the top">↑</button>
+          <button class="toolbar-btn toolbar-btn-add" id="btn-cleanup" aria-label="Clean up completed tasks" title="Clean up completed tasks"><svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true"><line x1="10" y1="2" x2="10" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="6" y1="12" x2="14" y2="12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="7" y1="12" x2="6" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="10" y1="12" x2="10" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/><line x1="13" y1="12" x2="14" y2="18" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg></button>
+          <span class="toolbar-label">clean up</span>
         </div>
       </div>
 
@@ -2415,9 +2430,11 @@ function buildCanvasCards(rm) {
     let clickTimer = null;
     card.addEventListener('click', (e) => {
       if (card._suppressNextClick) { card._suppressNextClick = false; return; }
-      if (card.querySelector('input')) return;
+      if (card._isEditing) return;
+      if (card.querySelector('input') || card.querySelector('[contenteditable="true"]')) return;
       clearTimeout(clickTimer);
       clickTimer = setTimeout(() => {
+        if (card._isEditing) return;
         onCanvasCardTap(card, task.id);
       }, 250);
     });
@@ -2433,6 +2450,7 @@ function buildCanvasCards(rm) {
       const originalText = textEl.textContent;
       const taskId = card.dataset.id;
 
+      card._isEditing = true;
       textEl.setAttribute('contenteditable', 'true');
       textEl.style.outline = 'none';
       textEl.focus();
@@ -2445,26 +2463,30 @@ function buildCanvasCards(rm) {
       sel.removeAllRanges();
       sel.addRange(range);
 
+      function endEdit() {
+        setTimeout(() => { card._isEditing = false; }, 350);
+        resetIOSZoom();
+      }
+
       function save() {
         textEl.setAttribute('contenteditable', 'false');
-        // Normalize: convert <br> and <div> to \n, then get plain text for state
         const html = textEl.innerHTML;
         const plainText = textEl.textContent.trim() || originalText;
         if (plainText !== originalText) {
           const t = state.tasks.find(t => t.id === taskId);
           if (t) t.text = plainText;
         }
-        // Preserve line breaks in display by keeping innerHTML with <br> tags
-        // Clean up: normalize divs/ps from contenteditable to simple <br>
         const cleaned = html.replace(/<div>/gi, '<br>').replace(/<\/div>/gi, '').replace(/<p>/gi, '<br>').replace(/<\/p>/gi, '').replace(/^<br>/, '').trim();
         textEl.innerHTML = cleaned || escapeHtml(originalText);
         card.setAttribute('aria-label', `${plainText} — click to toggle done`);
         requestAnimationFrame(() => requestAnimationFrame(() => updateStrikePath(card)));
+        endEdit();
       }
 
       function cancel() {
         textEl.setAttribute('contenteditable', 'false');
         textEl.textContent = originalText;
+        endEdit();
       }
 
       textEl.addEventListener('keydown', function handler(ev) {
@@ -2603,6 +2625,16 @@ function animateCardsFlying(sortRects, rm) {
 // Canvas card interactions
 // ──────────────────────────────────────────────────────────────────────────────
 
+function resetIOSZoom() {
+  const vp = document.querySelector('meta[name=viewport]');
+  if (vp) {
+    vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0');
+    setTimeout(() => {
+      vp.setAttribute('content', 'width=device-width, initial-scale=1.0');
+    }, 100);
+  }
+}
+
 function onCanvasCardTap(card, id) {
   const isDone = state.done.has(id);
   const text = getTaskText(id);
@@ -2612,9 +2644,8 @@ function onCanvasCardTap(card, id) {
     card.classList.remove('done');
     card.setAttribute('aria-pressed', 'false');
     card.setAttribute('aria-label', `${text} — click to toggle done`);
-    // Set inline strokeDashoffset to full length (hidden)
     if (strikePath) {
-      const len = strikePath.getTotalLength?.() || parseFloat(strikePath.style.strokeDasharray) || 100;
+      const len = parseFloat(strikePath.style.strokeDasharray) || strikePath.getTotalLength?.() || 100;
       strikePath.style.strokeDashoffset = len + '';
     }
     announce(`${text} — unmarked`);
@@ -2734,18 +2765,10 @@ function initCanvasAdd() {
 
   // Close on blur and reset iOS zoom
   addInput.addEventListener('blur', () => {
-    // Small delay so click-on-addBtn doesn't race with blur
     setTimeout(() => {
       addWrap.classList.remove('visible');
     }, 150);
-    // Reset any iOS auto-zoom that may have occurred
-    const vp = document.querySelector('meta[name=viewport]');
-    if (vp) {
-      vp.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0');
-      setTimeout(() => {
-        vp.setAttribute('content', 'width=device-width, initial-scale=1.0');
-      }, 100);
-    }
+    resetIOSZoom();
   });
 
   document.addEventListener('click', (e) => {
@@ -2802,9 +2825,11 @@ function addTaskToCanvas(text) {
   let clickTimer = null;
   card.addEventListener('click', (e) => {
     if (card._suppressNextClick) { card._suppressNextClick = false; return; }
-    if (card.querySelector('input')) return;
+    if (card._isEditing) return;
+    if (card.querySelector('input') || card.querySelector('[contenteditable="true"]')) return;
     clearTimeout(clickTimer);
     clickTimer = setTimeout(() => {
+      if (card._isEditing) return;
       onCanvasCardTap(card, task.id);
     }, 250);
   });
@@ -2820,6 +2845,7 @@ function addTaskToCanvas(text) {
     const originalText = textEl.textContent;
     const taskId = card.dataset.id;
 
+    card._isEditing = true;
     textEl.setAttribute('contenteditable', 'true');
     textEl.style.outline = 'none';
     textEl.focus();
@@ -2830,6 +2856,11 @@ function addTaskToCanvas(text) {
     const sel = window.getSelection();
     sel.removeAllRanges();
     sel.addRange(range);
+
+    function endEdit() {
+      setTimeout(() => { card._isEditing = false; }, 350);
+      resetIOSZoom();
+    }
 
     function save() {
       textEl.setAttribute('contenteditable', 'false');
@@ -2843,11 +2874,13 @@ function addTaskToCanvas(text) {
       textEl.innerHTML = cleaned || escapeHtml(originalText);
       card.setAttribute('aria-label', `${plainText} — click to toggle done`);
       requestAnimationFrame(() => requestAnimationFrame(() => updateStrikePath(card)));
+      endEdit();
     }
 
     function cancel() {
       textEl.setAttribute('contenteditable', 'false');
       textEl.textContent = originalText;
+      endEdit();
     }
 
     textEl.addEventListener('keydown', function handler(ev) {
@@ -2931,7 +2964,7 @@ function setupLongPressDrag(card, id) {
   const SNAP_THRESHOLD = 20;
 
   function onStart(e) {
-    if (card.querySelector('input')) return;
+    if (card.querySelector('input') || card.querySelector('[contenteditable="true"]')) return;
     if (e.button !== undefined && e.button !== 0) return;
     const clientX = e.touches ? e.touches[0].clientX : e.clientX;
     const clientY = e.touches ? e.touches[0].clientY : e.clientY;
