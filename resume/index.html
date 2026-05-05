@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Resume — Qing (Diane) Hu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Instrument Sans', sans-serif;
+      background: #fff;
+      color: #1f1f1f;
+      -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
+      height: 100dvh;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 60px;
+      flex-shrink: 0;
+    }
+
+    .logo {
+      font-family: 'Merriweather', serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.35px;
+      color: #1f1f1f;
+      text-decoration: none;
+    }
+
+    .download {
+      font-size: 13px;
+      color: #1f1f1f;
+      text-decoration: none;
+      border-bottom: 1px solid #1f1f1f;
+      padding-bottom: 1px;
+    }
+
+    .download:hover { opacity: 0.5; }
+
+    .pdf-frame {
+      flex: 1;
+      width: 100%;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <a class="logo" href="/">Q. H.</a>
+    <a class="download" href="/resume.pdf" download>Download PDF</a>
+  </header>
+  <iframe class="pdf-frame" src="/resume.pdf" title="Qing (Diane) Hu — Resume"></iframe>
+</body>
+</html>
