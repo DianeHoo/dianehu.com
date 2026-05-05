@@ -10,6 +10,9 @@
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+  <div class="page-wrap">
+  <div class="grad-blob grad-blob--107" aria-hidden="true"><img src="images/ellipse-107.svg" alt=""></div>
+  <div class="grad-blob grad-blob--109" aria-hidden="true"><img src="images/ellipse-109.svg" alt=""></div>
   <header class="header">
     <div class="logo">Q. H.</div>
     <nav class="nav">
@@ -21,13 +24,11 @@
   </header>
 
   <section class="hero">
-    <div class="hero-blur" aria-hidden="true">
-      <img src="images/blur-bg.svg" alt="">
-    </div>
+    <img class="hero-bg-right" src="images/hero-bg-right.png" alt="" aria-hidden="true">
     <div class="hero-inner">
       <div class="hero-text">
         <h1>Qing (Diane) Hu</h1>
-        <p class="hero-tagline"><em>Design</em>, <em>build</em>, and <em>research</em> human-AI interaction.</p>
+        <p class="hero-tagline"> I <em>Design</em>, <em>build</em>, and <em>research</em> human-AI interaction.</p>
         <div class="bio">
           <p>As a recent graduate from School of Design, <span class="accent">Carnegie Mellon University</span>, I</p>
           <ul class="bio-list">
@@ -38,7 +39,7 @@
         </div>
         <div class="hero-callout">
           <img src="images/icon-megaphone.svg" alt="" width="29" height="24">
-          <p>I'm <span class="accent">looking for job positions</span> where design &times; build &times; research can come together!</p>
+          <p>I'm <span class="accent">looking for job positions</span> where design &times; build &times; research come together!</p>
         </div>
       </div>
       <div class="social-icons">
@@ -71,6 +72,13 @@
 
     <div class="featured-row">
       <div class="featured-meta">
+        <div class="lady-badge" aria-hidden="true">
+          <div class="lady-badge-inner">
+            <div class="lady-badge-inset">
+              <img src="images/jiangpai5.svg" alt="">
+            </div>
+          </div>
+        </div>
         <h2>Lady Parts</h2>
         <p class="featured-tagline">Hybrid care system for stigma-free vaginal health on campus</p>
       </div>
@@ -79,8 +87,8 @@
           <p>Vaginal health is deeply personal and varies across individuals, yet widely stigmatized. For young individuals navigating reproductive health on their own for the first time, there's little guidance that fits their actual needs.</p>
           <p>Lady Parts* is a university-based hybrid care system that pairs a self-screening tool and personalized questionnaire &mdash; "Vaginality Test" with a matched Care kit, turning an intimidating topic into an accessible, empowering experience.</p>
           <div class="award-badge">
-            <img src="https://www.figma.com/api/mcp/asset/36a885ab-fd13-4bfd-bf33-9df0d491ad14" alt="AIGA Award" width="99" height="36">
-            <span class="award-label">Gold Winner</span>
+            <img src="images/lady-parts-award.png" alt="Award" width="99" height="36">
+            <ul class="award-label"><li>Gold Winner</li></ul>
           </div>
         </div>
         <p class="footnote">*Lady Parts &mdash; We are reclaiming the term &ldquo;lady parts&rdquo; to empower women and all vagina owners.</p>
@@ -123,10 +131,10 @@
       </div>
     </div>
     <div class="project-card">
-      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/2ad5170e-4be8-4b4e-8fae-7e0b77197fe7" alt="&ldquo;AIPO&rdquo; Health Management System for the Mid-Aged"></div>
+      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/45161298-6554-411e-a37f-5ea926f5373e" alt="&ldquo;ChatWise&rdquo; Personal Knowledge Management System for LLM"></div>
       <div class="card-info">
         <span class="category">Interaction Design</span>
-        <h3>&ldquo;AIPO&rdquo; Health Management System for the Mid-Aged</h3>
+        <h3>&ldquo;ChatWise&rdquo; Personal Knowledge Management System for LLM</h3>
       </div>
     </div>
     <div class="project-card">
@@ -137,31 +145,17 @@
       </div>
     </div>
     <div class="project-card">
-      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/45161298-6554-411e-a37f-5ea926f5373e" alt="&ldquo;ChatWise&rdquo; Personal Knowledge Management System for LLM"></div>
-      <div class="card-info">
-        <span class="category">Interaction Design</span>
-        <h3>&ldquo;ChatWise&rdquo; Personal Knowledge Management System for LLM</h3>
-      </div>
-    </div>
-    <div class="project-card">
-      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/5fa4f10b-84ea-44cf-8c00-e0e4ea4769cb" alt="LLM Interface for User Research"></div>
+      <div class="img-wrap"><img src="images/llm-research.jpg" alt="LLM Interface for User Research"></div>
       <div class="card-info">
         <span class="category">Research</span>
         <h3>LLM Interface for User Research</h3>
       </div>
     </div>
-    <div class="project-card">
-      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/4bde353f-696c-47a0-bdfb-d272282dfa5b" alt="Food Insecurity in Pittsburgh"></div>
-      <div class="card-info">
-        <span class="category">Transition Design</span>
-        <h3>Food Insecurity in Pittsburgh</h3>
-      </div>
-    </div>
-    <div class="project-card">
-      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/8bd91b89-2cdb-46bb-857b-75b7468bb876" alt="AI Meeting Note-taker"></div>
+    <div class="project-card project-card--wide">
+      <div class="video-wrap"><video class="project-video" data-src="videos/todomap_cover.mp4" poster="images/todomap-poster.png" muted loop playsinline></video></div>
       <div class="card-info">
         <span class="category">Prototype</span>
-        <h3>AI Meeting Note-taker</h3>
+        <h3>To-Do Map</h3>
       </div>
     </div>
     <div class="project-card">
@@ -172,10 +166,31 @@
       </div>
     </div>
     <div class="project-card">
+      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/2ad5170e-4be8-4b4e-8fae-7e0b77197fe7" alt="&ldquo;AIPO&rdquo; Health Management System for the Mid-Aged"></div>
+      <div class="card-info">
+        <span class="category">Interaction Design</span>
+        <h3>&ldquo;AIPO&rdquo; Health Management System for the Mid-Aged</h3>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/4bde353f-696c-47a0-bdfb-d272282dfa5b" alt="Food Insecurity in Pittsburgh"></div>
+      <div class="card-info">
+        <span class="category">Transition Design</span>
+        <h3>Food Insecurity in Pittsburgh</h3>
+      </div>
+    </div>
+    <div class="project-card">
       <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/a4922664-4b8b-4bc6-9bbd-7b7e501167b5" alt="Zine: Design Minds"></div>
       <div class="card-info">
         <span class="category">Communication Design</span>
         <h3>Zine: Design Minds</h3>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/8bd91b89-2cdb-46bb-857b-75b7468bb876" alt="AI Meeting Note-taker"></div>
+      <div class="card-info">
+        <span class="category">Prototype</span>
+        <h3>AI Meeting Note-taker</h3>
       </div>
     </div>
     <div class="project-card">
@@ -186,17 +201,17 @@
       </div>
     </div>
     <div class="project-card">
-      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/81d6fa52-bedf-4907-b68f-436080ec1619" alt="&ldquo;Grammarize&rdquo; Intelligent Tutoring System"></div>
-      <div class="card-info">
-        <span class="category">Research</span>
-        <h3>&ldquo;Grammarize&rdquo; Intelligent Tutoring System</h3>
-      </div>
-    </div>
-    <div class="project-card">
       <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/e4ee143a-b77e-4b7f-a0c0-075617d89078" alt="Chantal's Cheese shop"></div>
       <div class="card-info">
         <span class="category">Communication Design</span>
         <h3>Chantal's Cheese shop</h3>
+      </div>
+    </div>
+    <div class="project-card">
+      <div class="img-wrap"><img src="https://www.figma.com/api/mcp/asset/81d6fa52-bedf-4907-b68f-436080ec1619" alt="&ldquo;Grammarize&rdquo; Intelligent Tutoring System"></div>
+      <div class="card-info">
+        <span class="category">Research</span>
+        <h3>&ldquo;Grammarize&rdquo; Intelligent Tutoring System</h3>
       </div>
     </div>
     <div class="project-card">
@@ -214,6 +229,8 @@
       </div>
     </div>
   </section>
+  <img class="page-footer-bg" src="images/footer-bg.png" alt="" aria-hidden="true">
+  </div>
 
   <script>
     var observer = new IntersectionObserver(function(entries) {
