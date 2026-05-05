@@ -65,7 +65,7 @@
         <img src="https://www.figma.com/api/mcp/asset/a8c711b3-fd94-475b-8af1-3b71fc8cc59e" alt="Children's Museum of Pittsburgh" class="badge-logo">
       </div>
       <div class="featured-image">
-        <img src="https://www.figma.com/api/mcp/asset/481ee186-9219-42c1-ad79-97088836eb87" alt="Angry Sheep">
+        <video class="project-video" data-src="videos/angrysheep_cover_720p.mp4" poster="images/angrysheep-poster.png" muted loop playsinline></video>
       </div>
     </div>
 
@@ -86,7 +86,7 @@
         <p class="footnote">*Lady Parts &mdash; We are reclaiming the term &ldquo;lady parts&rdquo; to empower women and all vagina owners.</p>
       </div>
       <div class="featured-image">
-        <img src="https://www.figma.com/api/mcp/asset/5cf233ee-b51d-42de-a434-23fe9582755d" alt="Lady Parts">
+        <video class="project-video" data-src="videos/ladyparts_cover_720p.mp4" poster="images/ladyparts-poster.png" muted loop playsinline></video>
       </div>
     </div>
 
@@ -102,14 +102,14 @@
         <img src="https://www.figma.com/api/mcp/asset/a58d49bf-6db5-47c8-95f5-4bebd91db1c4" alt="CHI 2026" class="badge-logo chi-logo">
       </div>
       <div class="featured-image">
-        <img src="https://www.figma.com/api/mcp/asset/da6e3871-dd85-4236-8099-ead2136863ac" alt="Manager Clone Agent">
+        <video class="project-video" data-src="videos/mca-cover_720.mp4" poster="images/mca-poster.png" muted loop playsinline></video>
       </div>
     </div>
   </section>
 
   <section class="projects" id="works">
     <div class="project-card project-card--wide">
-      <video class="project-video" src="videos/ai-therapist.mp4" autoplay muted loop playsinline></video>
+      <div class="video-wrap"><video class="project-video" data-src="videos/ai-therapist_720.mp4" poster="images/ai-therapist-poster.png" muted loop playsinline></video></div>
       <div class="card-info">
         <span class="category">Interactive Data Story</span>
         <h3>&ldquo;Scrolly-telling&rdquo; How AI is Misused for Therapeutic Reasons</h3>
@@ -216,9 +216,22 @@
   </section>
 
   <script>
+    var observer = new IntersectionObserver(function(entries) {
+      entries.forEach(function(entry) {
+        var v = entry.target;
+        if (entry.isIntersecting) {
+          if (!v.src && v.dataset.src) {
+            v.src = v.dataset.src;
+          }
+          v.play();
+        } else {
+          v.pause();
+        }
+      });
+    }, { rootMargin: '200px' });
+
     document.querySelectorAll('.project-video').forEach(function(v) {
-      v.addEventListener('mouseenter', function() { v.pause(); v.currentTime = 0; });
-      v.addEventListener('mouseleave', function() { v.play(); });
+      observer.observe(v);
     });
   </script>
 </body>

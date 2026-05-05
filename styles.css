@@ -165,10 +165,11 @@ body {
 
 .social-icons a img {
   display: block;
+  transition: filter 0.15s;
 }
 
-.social-icons a:hover {
-  opacity: 0.6;
+.social-icons a:hover img {
+  filter: brightness(0);
 }
 
 /* ── Featured Projects ── */
@@ -275,9 +276,25 @@ body {
   min-width: 0;
   height: 420px;
   overflow: hidden;
+  position: relative;
 }
 
-.featured-image img {
+.featured-image::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 181, 202, 0.2);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.featured-image:hover::after {
+  opacity: 1;
+}
+
+.featured-image img,
+.featured-image .project-video {
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -299,6 +316,25 @@ body {
   gap: 20px;
   width: 318px;
   padding-bottom: 22px;
+}
+
+.video-wrap {
+  position: relative;
+  overflow: hidden;
+}
+
+.video-wrap::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(255, 181, 202, 0.2);
+  opacity: 0;
+  transition: opacity 0.2s;
+  pointer-events: none;
+}
+
+.video-wrap:hover::after {
+  opacity: 1;
 }
 
 .project-card img {
