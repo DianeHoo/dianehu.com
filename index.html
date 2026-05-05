@@ -22,7 +22,7 @@
 
   <section class="hero">
     <div class="hero-blur" aria-hidden="true">
-      <img src="https://www.figma.com/api/mcp/asset/27b0c64d-bc50-4918-a877-9bc872b0bf77" alt="">
+      <img src="images/blur-bg.svg" alt="">
     </div>
     <div class="hero-inner">
       <div class="hero-text">
@@ -37,17 +37,17 @@
           </ul>
         </div>
         <div class="hero-callout">
-          <img src="https://www.figma.com/api/mcp/asset/749f4fe0-6fe6-4757-8145-9d822e65aac4" alt="" width="29" height="24">
+          <img src="images/icon-megaphone.svg" alt="" width="29" height="24">
           <p>I'm <span class="accent">looking for job positions</span> where design &times; build &times; research can come together!</p>
         </div>
       </div>
       <div class="social-icons">
-        <a href="https://www.linkedin.com/in/qingdianehu" target="_blank" rel="noopener" title="LinkedIn"><img src="https://www.figma.com/api/mcp/asset/af5474b2-db5d-4a72-b73b-d1a6bf02df54" alt="LinkedIn" width="22" height="22"></a>
-        <a href="https://github.com/DianeHoo" target="_blank" rel="noopener" title="GitHub"><img src="https://www.figma.com/api/mcp/asset/303dd7b5-ae9d-4035-8bc7-cd6c68d62328" alt="GitHub" width="24" height="24"></a>
-        <a href="https://scholar.google.com/citations?user=5iBYC54AAAAJ&hl=en" target="_blank" rel="noopener" title="Google Scholar"><img src="https://www.figma.com/api/mcp/asset/dbc554f2-003d-4e57-b9e8-dc08e8771d8f" alt="Google Scholar" width="29" height="26"></a>
-        <a href="https://x.com/dianehooo" target="_blank" rel="noopener" title="X (Twitter)"><img src="https://www.figma.com/api/mcp/asset/b3db11a9-645a-4103-ade0-f583a407009b" alt="X (Twitter)" width="24" height="24"></a>
-        <a href="mailto:dianehuq@gmail.com" title="Email"><img src="https://www.figma.com/api/mcp/asset/b9140984-ba33-41f0-b901-5410eb5772cb" alt="Email" width="24" height="24"></a>
-        <a href="/resume.pdf" target="_blank" rel="noopener" title="Resume"><img src="https://www.figma.com/api/mcp/asset/dc8024fa-51a5-43ae-8814-ff045624b08b" alt="Resume" width="24" height="24"></a>
+        <a href="https://www.linkedin.com/in/qingdianehu" target="_blank" rel="noopener" title="LinkedIn"><img src="images/icon-linkedin.svg" alt="LinkedIn" width="22" height="22"></a>
+        <a href="https://github.com/DianeHoo" target="_blank" rel="noopener" title="GitHub"><img src="images/icon-github.svg" alt="GitHub" width="24" height="24"></a>
+        <a href="https://scholar.google.com/citations?user=5iBYC54AAAAJ&hl=en" target="_blank" rel="noopener" title="Google Scholar"><img src="images/icon-scholar.svg" alt="Google Scholar" width="28" height="28"></a>
+        <a href="https://x.com/dianehooo" target="_blank" rel="noopener" title="X (Twitter)"><img src="images/icon-x.svg" alt="X (Twitter)" width="24" height="24"></a>
+        <a href="mailto:dianehuq@gmail.com" title="Email"><img src="images/icon-email.svg" alt="Email" width="27" height="27"></a>
+        <a href="/resume.pdf" target="_blank" rel="noopener" title="Resume"><img src="images/icon-cv.svg" alt="Resume" width="23" height="26"></a>
       </div>
     </div>
   </section>
@@ -108,8 +108,8 @@
   </section>
 
   <section class="projects" id="works">
-    <div class="project-card">
-      <img src="https://www.figma.com/api/mcp/asset/dc604dbf-921c-479b-ac0f-491b44d6acb5" alt="&ldquo;Scrolly-telling&rdquo; How AI is Misused for Therapeutic Reasons">
+    <div class="project-card project-card--wide">
+      <video class="project-video" src="videos/ai-therapist.mp4" autoplay muted loop playsinline></video>
       <div class="card-info">
         <span class="category">Interactive Data Story</span>
         <h3>&ldquo;Scrolly-telling&rdquo; How AI is Misused for Therapeutic Reasons</h3>
@@ -214,5 +214,12 @@
       </div>
     </div>
   </section>
+
+  <script>
+    document.querySelectorAll('.project-video').forEach(function(v) {
+      v.addEventListener('mouseenter', function() { v.pause(); v.currentTime = 0; });
+      v.addEventListener('mouseleave', function() { v.play(); });
+    });
+  </script>
 </body>
 </html>

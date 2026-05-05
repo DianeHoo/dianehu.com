@@ -106,7 +106,7 @@ body {
   font-size: 24px;
   letter-spacing: -0.6px;
   line-height: 1.4;
-  color: rgba(145, 0, 41, 0.8);
+  color: #910029;
 }
 
 .bio {
@@ -160,21 +160,15 @@ body {
   display: flex;
   align-items: center;
   justify-content: center;
-  opacity: 0.75;
   transition: opacity 0.15s;
 }
 
 .social-icons a img {
   display: block;
-  transition: filter 0.15s;
 }
 
 .social-icons a:hover {
-  opacity: 1;
-}
-
-.social-icons a:hover img {
-  filter: brightness(0);
+  opacity: 0.6;
 }
 
 /* ── Featured Projects ── */
@@ -313,6 +307,18 @@ body {
   object-fit: cover;
 }
 
+.project-card--wide {
+  width: 676px;
+}
+
+.project-video {
+  width: 100%;
+  aspect-ratio: 1920 / 1080;
+  display: block;
+  object-fit: cover;
+  cursor: pointer;
+}
+
 .card-info {
   display: flex;
   flex-direction: column;
@@ -384,7 +390,8 @@ body {
     gap: 24px;
   }
 
-  .project-card {
+  .project-card,
+  .project-card--wide {
     width: 100%;
   }
 
