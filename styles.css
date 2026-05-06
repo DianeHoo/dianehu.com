@@ -361,6 +361,9 @@ body {
   min-width: 0;
   overflow: hidden;
   position: relative;
+  display: block;
+  text-decoration: none;
+  cursor: pointer;
 }
 
 .featured-image::after {
@@ -371,6 +374,10 @@ body {
   opacity: 0;
   transition: opacity 0.2s;
   pointer-events: none;
+}
+
+.featured-image:hover::after {
+  opacity: 1;
 }
 
 
