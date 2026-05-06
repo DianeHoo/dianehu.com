@@ -1,0 +1,615 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bias in LLMs for User Research — Qing (Diane) Hu</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&family=Instrument+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Merriweather:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #fff;
+      color: #1f1f1f;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    a { color: inherit; text-decoration: none; }
+
+    /* Header */
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 20px 60px;
+    }
+
+    .logo {
+      font-family: 'Merriweather', serif;
+      font-weight: 700;
+      font-size: 14px;
+      letter-spacing: -0.35px;
+      color: #1f1f1f;
+      padding: 6px 0;
+    }
+
+    nav {
+      display: flex;
+      align-items: center;
+    }
+
+    nav a {
+      font-family: 'Instrument Sans', sans-serif;
+      font-weight: 400;
+      font-size: 14px;
+      letter-spacing: -0.35px;
+      color: #1f1f1f;
+      padding: 6px 10px;
+      line-height: 16px;
+    }
+
+    /* Hero section */
+    .hero {
+      padding: 118px 60px 60px;
+      max-width: 1200px;
+    }
+
+    .hero-text {
+      display: flex;
+      flex-direction: column;
+      gap: 25px;
+      width: 889px;
+    }
+
+    .hero-title {
+      font-family: 'Merriweather', serif;
+      font-weight: 400;
+      font-size: 36px;
+      letter-spacing: -0.9px;
+      color: #1f1f1f;
+      line-height: 1;
+    }
+
+    .hero-meta {
+      font-family: 'Instrument Sans', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      letter-spacing: -0.4px;
+      color: #1f1f1f;
+      line-height: 23px;
+    }
+
+    /* Divider */
+    .divider {
+      width: 100%;
+      height: 0.5px;
+      background: #d4d4d4;
+      flex-shrink: 0;
+    }
+
+    /* Content rows */
+    .row {
+      display: flex;
+      gap: 12px;
+      align-items: flex-start;
+      padding: 20px 60px 120px;
+      width: 100%;
+    }
+
+    .row-label {
+      width: 281px;
+      flex-shrink: 0;
+      font-family: 'Merriweather', serif;
+      font-weight: 400;
+      font-size: 16px;
+      letter-spacing: -0.4px;
+      color: #000;
+      line-height: 17px;
+      font-style: normal;
+      padding-top: 1px;
+    }
+
+    .row-label.sub {
+      font-size: 15px;
+      letter-spacing: -0.375px;
+      color: #737373;
+    }
+
+    .row-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* Typography */
+    .body-text {
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      letter-spacing: -0.4px;
+      color: #1f1f1f;
+      line-height: 20px;
+      max-width: 660px;
+    }
+
+    .body-text p + p {
+      margin-top: 11px;
+    }
+
+    .body-display {
+      font-family: 'Inter', sans-serif;
+      font-weight: 500;
+      font-size: 20px;
+      letter-spacing: -0.5px;
+      color: #000;
+      line-height: 22px;
+      width: 443px;
+    }
+
+    .body-display.dark {
+      color: #1f1f1f;
+    }
+
+    /* Images */
+    .img-wrap {
+      position: relative;
+      width: 100%;
+    }
+
+    .img-wrap img {
+      display: block;
+      width: 100%;
+      height: auto;
+      object-fit: cover;
+    }
+
+    .img-caption {
+      font-family: 'Merriweather', serif;
+      font-weight: 400;
+      font-size: 14px;
+      letter-spacing: -0.35px;
+      color: #737373;
+      line-height: 1.4;
+      margin-top: 13px;
+    }
+
+    /* Affinity grid */
+    .affinity-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 9px;
+      width: 100%;
+    }
+
+    .affinity-grid-top {
+      display: flex;
+      gap: 7px;
+      width: 100%;
+    }
+
+    .affinity-grid .img-a {
+      flex: 350 1 0;
+      height: 230px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .affinity-grid .img-b {
+      flex: 430 1 0;
+      height: 230px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .affinity-grid .img-c {
+      width: 100%;
+      aspect-ratio: 4096 / 1574;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .affinity-grid img {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    /* Insight blocks */
+    .insight-block {
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+      width: 100%;
+    }
+
+
+    .insight-cols {
+      display: flex;
+      gap: 47px;
+      align-items: flex-start;
+    }
+
+    .insight-col {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      width: 281px;
+      flex-shrink: 0;
+    }
+
+    .insight-col-label {
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      letter-spacing: -0.4px;
+      color: #737373;
+      line-height: 20px;
+    }
+
+    .insight-col-text {
+      font-family: 'Inter', sans-serif;
+      font-weight: 400;
+      font-size: 16px;
+      letter-spacing: -0.4px;
+      color: #1f1f1f;
+      line-height: 20px;
+    }
+
+    /* Lists */
+    ol, ul {
+      padding-left: 24px;
+    }
+
+    ol li + li,
+    ul li + li {
+      margin-top: 11px;
+    }
+
+    li span {
+      line-height: 20px;
+    }
+
+    /* Content gap */
+    .content-gap {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+    }
+
+    /* Quote */
+    .quote {
+      color: #737373;
+      line-height: 20px;
+    }
+
+    /* Bold inline */
+    strong {
+      font-weight: 500;
+    }
+
+    /* Section content text block constraints */
+    .text-block {
+      max-width: 660px;
+    }
+
+  </style>
+</head>
+<body>
+
+  <header>
+    <a href="/" class="logo">Q. H.</a>
+    <nav>
+      <a href="/#design">Design</a>
+      <a href="/#prototypes">Prototypes</a>
+      <a href="/#research">Research</a>
+      <a href="/#about">About Me</a>
+    </nav>
+  </header>
+
+  <section class="hero">
+    <div class="hero-text">
+      <h1 class="hero-title">Bias in Using Large Language Models for User Research</h1>
+      <p class="hero-meta">Team Credit: <br>Diane Hu (Project Lead); Christina Yang; Winnie Tsai; Xiang Chen; Ziru Wei</p>
+      <p class="hero-meta">Course: <br>User-Centered Research and Evaluation (25 Spring), HCII</p>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Abstract -->
+  <div class="row">
+    <div class="row-label">Abstract</div>
+    <div class="row-content">
+      <div class="body-text">
+        <p>Our work helps novice designers recognize biases in AI-generated user insights by embedding clear bias indicators into the content, ensuring informed design decisions.</p>
+        <p>There's an upward trend for Designers to rely on LLMs to learn about hard-to-access user groups in the early stage of a project, such as individuals with ADHD, but this can embed unnoticed biases into their design research.</p>
+        <p>Therefore, we designed an LLM interface with Bias Cues, prompting designers reflect on the generated content when using GenAI tools to conduct user research.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Research Methods Overview -->
+  <div class="row">
+    <div class="row-label">Research Methods Overview</div>
+    <div class="row-content content-gap">
+      <div class="img-wrap">
+        <img src="images/1.png" alt="Research methods overview diagram">
+      </div>
+      <div class="img-caption">
+        <p>*Main research methods</p>
+        <p>*https://www.smashingmagazine.com/2020/05/research-study-double-diamond-model/</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Problem Scope -->
+  <div class="row">
+    <div class="row-label">Problem Scope</div>
+    <div class="row-content content-gap">
+      <p class="body-display dark">How can we enable novice design students to recognize and mitigate biases embedded in ChatGPT outputs while they use the tool to brainstorm early-stage design concepts?</p>
+      <div class="img-wrap">
+        <img src="images/2.png" alt="Abstraction laddering diagram for problem scope">
+      </div>
+      <p class="body-text text-block">We used "Abstraction Laddering" to brainstorm needs and ideas which then reframed into problems.</p>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Research Protocol: heading -->
+  <div class="row">
+    <div class="row-label">Research Protocol</div>
+    <div class="row-content">
+      <p class="body-display dark" style="color: #1f1f1f;">Contextual Inquiry</p>
+    </div>
+  </div>
+
+  <!-- Research Method -->
+  <div class="row">
+    <div class="row-label sub">Research Method</div>
+    <div class="row-content">
+      <div class="body-text text-block">
+        <p>Novice designer participants who have limited prior ADHD knowledge, are asked to conduct a design challenge by generating user scenario on ChatGPT to surface design opportunities.</p>
+        <p>While doing the task, participants are asked to think aloud. After the task participants will be asked a few questions on how they usually use chatGPT to do user research or human-centered design and their practices on filtering information biases.</p>
+        <p>This method allows us to analyze the relationship between bias recognition and design opportunities in early-stage UX research, uncovering how designers interpret and address biases when working with AI-generated user research artifacts.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Research Questions -->
+  <div class="row">
+    <div class="row-label sub">Research questions</div>
+    <div class="row-content">
+      <div class="body-text text-block">
+        <ol>
+          <li><span>Which types of GenAI content most readily earn novice designers' unconditional trust?</span></li>
+          <li><span>Which interaction behaviors with GenAI are most likely to introduce or exacerbate bias?</span></li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protocol Structure -->
+  <div class="row">
+    <div class="row-label sub">Protocol Structure</div>
+    <div class="row-content content-gap">
+      <div class="img-wrap">
+        <img src="images/3.png" alt="Protocol structure diagram">
+      </div>
+      <div class="body-text text-block">
+        <p><strong>Protocol Iteration</strong></p>
+        <p>Pilot: Provided an AI-generated empathy map for review only.</p>
+        <p>Iteration 1: Switched to open-ended interaction to observe authentic design workflows.</p>
+        <p>Iteration 2 (final): Narrowed the task to generating user scenarios and extracting insights, revealing how participants transform raw AI output into design opportunities.</p>
+      </div>
+      <div class="body-text text-block">
+        <p><strong>Experimental Controls</strong></p>
+        <p>All sessions used the GPT-4o model with online-search and reasoning enabled; deep-research mode was disabled.</p>
+        <p>To avoid priming, neither the moderator nor the study materials mentioned potential bias before or during the session.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Data Analysis -->
+  <div class="row">
+    <div class="row-label">Data Analysis</div>
+    <div class="row-content content-gap">
+      <p class="body-display">To find the shared pattern in the data collected, we conducted 3 rounds of affinity diagraming, Organizing into thematic clusters and ordering from left to right along the user journey.</p>
+      <div class="affinity-grid">
+        <div class="affinity-grid-top">
+          <div class="img-a"><img src="images/image169.png" alt="Affinity diagram session 1"></div>
+          <div class="img-b"><img src="images/image170.png" alt="Affinity diagram session 2"></div>
+        </div>
+        <div class="img-c"><img src="images/image171.png" alt="Affinity diagram full view"></div>
+      </div>
+      <p class="body-text text-block">Two models emerged during data analysis: User journey map &amp; Rose-Thorn-Bud</p>
+    </div>
+  </div>
+
+  <!-- User Journey Map -->
+  <div class="row">
+    <div class="row-label sub">User journey map</div>
+    <div class="row-content content-gap">
+      <p class="body-display" style="width: 530px;">User journey map captured emotional shifts (confidence, confusion, ignorant) and pinpointed moments when bias awareness rose or fell.</p>
+      <div class="img-wrap">
+        <img src="images/4.png" alt="User journey map">
+      </div>
+      <div class="body-text text-block">
+        <p>We find out that:</p>
+        <ul>
+          <li><span>Users start by leveraging variety in AI-generated content to mitigate inaccuracy, which provides a sense of control.</span></li>
+          <li><span>As their design tasks demand more precise and actionable insights, they adjust prompts to guide responses toward specificity. This shift from exploration to convergence exposes biases that were previously diluted, creating a fundamental tension in their strategy.</span></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Rose, Thorn & Bud -->
+  <div class="row">
+    <div class="row-label sub">Rose, Thorn &amp; Bud</div>
+    <div class="row-content content-gap">
+      <p class="body-display">The Rose-Thorn-Bud model is a formative feedback and thinking tool that helps us clearly identify existing strengths, problems, and potential opportunities.</p>
+      <div class="body-text text-block">
+        <p>We find out that:</p>
+        <p><strong>Rose</strong>: Participants actively seek primary data, request citations, and develop ad-hoc bias-mitigation tactics—indicating a latent need for transparent provenance.</p>
+        <p><strong>Thorn</strong>: Trust is low yet reliance is high—designers act as though the model is authoritative because it saves effort.</p>
+        <p><strong>Bud</strong>: System-supported best practices could build on these informal tactics.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Insight -->
+  <div class="row">
+    <div class="row-label">Insight</div>
+    <div class="row-content content-gap">
+
+      <div class="insight-block">
+        <p class="body-display dark">Novices over-specify prompts to gain control, but the added constraints can inject new bias.</p>
+        <div class="insight-cols">
+          <div class="insight-col">
+            <p class="insight-col-label">Representative Evidence</p>
+            <p class="insight-col-text">P2 requested "extreme hyper-active" scenarios; P5 embedded her own reasoning, leading to flattery and echoing of her bias.</p>
+          </div>
+          <div class="insight-col">
+            <p class="insight-col-label">Implication</p>
+            <p class="insight-col-text">Offer interface controls to tune response diversity (e.g., "increase viewpoint diversity" or "reduce over-generalization").</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-block">
+        <p class="body-display dark">Novelty bias: participants reward surprising output even when unverifiable.</p>
+        <div class="insight-cols">
+          <div class="insight-col">
+            <p class="insight-col-label">Representative Evidence</p>
+            <p class="insight-col-text">"ChatGPT can fill in knowledge that I don't have." – P5</p>
+          </div>
+          <div class="insight-col">
+            <p class="insight-col-label">Implication</p>
+            <p class="insight-col-text">Encourage critical reflection on novelty; surface evidence for claims.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-block">
+        <p class="body-display dark">Many participants rely on AI-generated summaries rather than reading full text.</p>
+        <div class="insight-cols">
+          <div class="insight-col">
+            <p class="insight-col-label">Representative Evidence</p>
+            <p class="insight-col-text">P4 asked ChatGPT to "simplify and combine" scenarios before deciding.</p>
+          </div>
+          <div class="insight-col">
+            <p class="insight-col-label">Implication</p>
+            <p class="insight-col-text">Position summaries as springboards for deeper inquiry rather than definitive answers; nudge users to inspect full text.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="insight-block">
+        <p class="body-display dark">When the output neatly matches the prompt, scrutiny stops.</p>
+        <div class="insight-cols">
+          <div class="insight-col">
+            <p class="insight-col-label">Representative Evidence</p>
+            <p class="insight-col-text">"I trust it when it answers my question as I requested." – P1</p>
+          </div>
+          <div class="insight-col">
+            <p class="insight-col-label">Implication</p>
+            <p class="insight-col-text">Insert reflective checkpoints or multi-perspective views to sustain critical engagement.</p>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Assumption Artifact -->
+  <div class="row">
+    <div class="row-label">Assumption Artifact</div>
+    <div class="row-content content-gap">
+      <p class="body-display dark">Building on the contextual-inquiry insights, we ran a Crazy 8s sprint, distilled the strongest ideas into storyboards, and pressure-tested them with target users through speed-dating interviews.</p>
+      <div class="body-text text-block">
+        <p>This converged on a single high-stakes hypothesis:</p>
+        <p>Lightweight, in-flow bias prompts embedded in the ChatGPT workflow can help novice designers notice hidden stereotypes without disrupting their creative momentum.</p>
+      </div>
+      <p class="body-display dark">To de-risk this hypothesis, we built an Assumption Artifact</p>
+      <div class="body-text text-block">
+        <p>A minimal-viable prototype of ChatGPT augmented with toggle-able bias prompts. The artifact allowed us to examine two intertwined uncertainties:</p>
+        <p><strong>Effectiveness</strong>: Will students actually notice, read, and leverage the prompts to spot bias?</p>
+        <p><strong>Non-intrusiveness</strong>: Can the prompts avoid feeling like pop-up noise that interrupts or burdens the design flow?</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Testing Protocol -->
+  <div class="row">
+    <div class="row-label sub">Testing Protocol</div>
+    <div class="row-content">
+      <div class="img-wrap">
+        <img src="images/5.png" alt="Testing protocol diagram">
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Discussion -->
+  <div class="row">
+    <div class="row-label">Discussion</div>
+    <div class="row-content content-gap">
+      <p class="body-display dark">Prompts can boost short-term recognition of biased content.</p>
+      <div class="body-text text-block">
+        <ul>
+          <li><span>About 62% participants lingered on sentences flagged as biased, and 80% opened the linked readings.</span></li>
+          <li><span>Post-study survey scores on "which statements are biased?" rose relative to the pre-study baseline, suggesting short-term retention.</span></li>
+        </ul>
+        <p class="quote" style="margin-top: 11px;">"Having opposing opinions presented to me (generated result and biase info) really helped me to identify design opportunities" — P8</p>
+      </div>
+      <p class="body-display dark">The side-panel format feels tacked-on; its cognitive cost may outweigh perceived value.</p>
+      <div class="body-text text-block">
+        <ul>
+          <li><span>Several students skimmed the snippets "for the answer" instead of reading deeply; others disliked having "unprompted information" appear beside the chat, describing it as distracting.</span></li>
+          <li><span>Interaction logs show hover/toggle time does not strongly correlate with learning gains, hinting that the current overlay feels tacked-on rather than integral to the task flow.</span></li>
+        </ul>
+        <p class="quote" style="margin-top: 11px;">"I really don't like to have unprompted information shown up by the side of my generated content." — P10</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="divider"></div>
+
+  <!-- Future Work -->
+  <div class="row">
+    <div class="row-label">Future Work</div>
+    <div class="row-content content-gap">
+      <div class="body-text text-block">
+        <p>Understanding common biases associated with certain type of user groups is vital for equipping designers to interrogate and refine language-model outputs.</p>
+        <p>Yet participant feedback suggests that the current side-panel implementation remains superficial and fails to entice deeper engagement.</p>
+        <p>To remedy this, in future work bias cues can be embedded directly within the generated content, making the influence of specific stereotypes both visible and actionable.</p>
+      </div>
+      <div class="body-text text-block">
+        <p><strong>Inline Integration</strong></p>
+        <p>Replace the peripheral panel with inline highlights that flag potentially biased phrases inside the ChatGPT response and dock concise explanations next to each highlight. A controlled A/B study will compare this inline approach with the existing side-panel design to determine which format sustains learning and minimizes workflow disruption.</p>
+      </div>
+      <div class="body-text text-block">
+        <p><strong>Contextual Rationale</strong></p>
+        <p>For every flagged phrase, explicitly articulate how the associated stereotype shapes or distorts the surrounding text, and link to primary sources for further reading. This contextual scaffolding should transform one-off prompts into a coherent narrative that motivates novice designers to interrogate, rather than merely acknowledge, bias.</p>
+      </div>
+    </div>
+  </div>
+
+</body>
+</html>
